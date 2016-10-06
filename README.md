@@ -61,4 +61,9 @@ you should leave makepk3's stuff in a directory of its own.
 ## Other stuff
 
 - By default, makepk3 does not include `.ir` files in the output PK7. Get rid of
-  the `-x!*.ir` argument in ARGS_7ZIP if you don't want this.
+  the `-x!*.ir` argument in ARGS\_7ZIP if you don't want this.
+
+- The reason GDCC-ACC only kicks in for `pk3/gacs` is because I want this to be
+  more or less a drop-in replacement for my old packagepk3.py script (that never
+  worked on any machine other than mine), and GDCC-ACC is stricter than ACC is -
+  which is to say, it actually type-checks.
