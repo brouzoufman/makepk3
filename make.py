@@ -199,17 +199,20 @@ def make():
         allOutFiles        = defaultdict(int)
         allOutFiles_byWhat = defaultdict(list)
         
-        if GDCC_SOURCES:
-            allOutFiles[GDCC_TARGETPATH] += 1
-            allOutFiles_byWhat[GDCC_TARGETPATH].append("GDCC target")
+        if EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD:
+            if GDCC_SOURCES:
+                allOutFiles[GDCC_TARGETPATH] += 1
+                allOutFiles_byWhat[GDCC_TARGETPATH].append("GDCC target")
         
-        for n, i in enumerate(GACC_OBJECTS):
-            allOutFiles[i] += 1
-            allOutFiles_byWhat[i].append(GACC_SOURCES[n])
+        if EXE_GDCC_ACC:
+            for n, i in enumerate(GACC_OBJECTS):
+                allOutFiles[i] += 1
+                allOutFiles_byWhat[i].append(GACC_SOURCES[n])
         
-        for n, i in enumerate(ACC_OBJECTS):
-            allOutFiles[i] += 1
-            allOutFiles_byWhat[i].append(ACC_SOURCES[n])
+        if EXE_ACC:
+            for n, i in enumerate(ACC_OBJECTS):
+                allOutFiles[i] += 1
+                allOutFiles_byWhat[i].append(ACC_SOURCES[n])
         
         overlapFiles = []
         
@@ -227,31 +230,46 @@ def make():
         
         
         if GDCC_SOURCES:
-            builtAnything  = gdcc_buildObjects()
-            linkedAnything = gdcc_linkObjects(builtAnything)
-            
-            if not (builtAnything or linkedAnything):
-                print("GDCC files up to date")
+            if EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD:
+                builtAnything  = gdcc_buildObjects()
+                linkedAnything = gdcc_linkObjects(builtAnything)
+                
+                if not (builtAnything or linkedAnything):
+                    print("GDCC files up to date")
+
+            else:
+                print("any of (gdcc-cc, gdcc-makelib, gdcc-ld) missing, cannot compile for GDCC")
+
         else:
             print("nothing to do for GDCC")
         
         print("")
         
         if GACC_SOURCES:
-            builtAnything = gacc_buildObjects()
-            
-            if not builtAnything:
-                print("GD-ACC files up to date")
+            if EXE_GDCC_ACC:
+                builtAnything = gacc_buildObjects()
+                
+                if not builtAnything:
+                    print("GD-ACC files up to date")
+
+            else:
+                print("gdcc-acc missing, cannot compile for GD-ACC")
+
         else:
             print("nothing to do for GD-ACC")
         
         print("")
         
         if ACC_SOURCES:
-            builtAnything = acc_buildObjects()
-            
-            if not builtAnything:
-                print("ACC files up to date")
+            if EXE_ACC:
+                builtAnything = acc_buildObjects()
+                
+                if not builtAnything:
+                    print("ACC files up to date")
+
+            else:
+                print("acc missing, cannot compile for ACC")
+
         else:
             print("nothing to do for ACC")
             
@@ -267,6 +285,10 @@ def make():
         return True
 
 def package():
+    if not EXE_7ZIP:
+        print("\n7za not found, packaging aborted")
+        return False
+
     if os.path.isfile(PK7_TARGET):
         os.remove(PK7_TARGET)
     
@@ -280,6 +302,8 @@ def package():
         print("\nFinal package is at " + PK7_TARGET)
     else:
         raise RuntimeError("packaging failed")
+
+    return True
 
 
 if __name__ == "__main__":

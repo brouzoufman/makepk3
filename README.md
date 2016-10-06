@@ -10,12 +10,17 @@ programs are included in `bin_win/`.
 
 Linux needs these:
 
-- GDCC ([https://github.com/DavidPH/GDCC](https://github.com/DavidPH/GDCC))
-- ACC  ([https://github.com/rheit/acc](https://github.com/rheit/acc))
-- 7za  (check your distro's repositories for `p7zip`)
+- GDCC for GDCC and GD-ACS compilation ([https://github.com/DavidPH/GDCC](https://github.com/DavidPH/GDCC))
+- ACC  for ACS compilation ([https://github.com/rheit/acc](https://github.com/rheit/acc))
+- 7za  for packaging (check your distro's repositories for `p7zip`)
 
-Install them normally - as long as the above are on your PATH, makepk3 will
-find them.
+Install them normally - as long as the above are on your PATH, makepk3 will find them.
+
+If GDCC is missing, `make.py` will not attempt to build anything in `pk3/gacs` or `pk3/gdcc`.
+
+If ACC is missing, `make.py` will not attempt to build anything in `pk3/acs`.
+
+If 7za is missing, `make.py` will not attempt to build a PK7.
 
 ## How to use it
 
