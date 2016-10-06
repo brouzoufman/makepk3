@@ -19,7 +19,9 @@ find them.
 
 ## How to use it
 
-Run `make.py`. That's it. Assuming no errors pop up
+Run `make.py`. That's it. Assuming no errors pop up, you should have a PK7 pop
+up in the directory you ran it in, containing everything in the `pk3/` directory,
+with the ACS and GDCC compiled up, ready to go.
 
 The directory you run `make.py` in must have a `pk3/` directory, which holds the
 contents of the PK3 you're making. If you're building ACS, GD-ACS, or GDCC
@@ -36,7 +38,7 @@ If you want to change the name of the generated PK3 or GDCC target file, either
 change the name of the directory your project is in, or hardcode it into the
 `PROJECT_NAME`/`GDCC_TARGET`/`PK7_TARGET` variable (`make.py`, line 18/19/20).
 
-You do not need to copy this into the same folder that houses `pk3/`. Really, you
+You do not need to copy this into the same directory that houses `pk3/`. Really, you
 should leave makepk3's stuff in a directory of its own.
 
 
