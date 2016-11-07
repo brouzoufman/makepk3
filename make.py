@@ -8,6 +8,7 @@ import subprocess
 from collections import defaultdict
 
 from inc.basefuncs import *
+from inc.settings  import *
 
 DIR_MINE = os.path.realpath(sys.argv[0]).rpartition(os.sep)[0]
 DIR_CUR  = os.path.realpath(".")
@@ -16,7 +17,7 @@ DIR_PK3  = DIR_CUR + os.sep + "pk3"
 # put your own project name in the quotes if you don't want to use dir name
 # ditto for GDCC_TARGET
 PROJECT_NAME = "" or os.path.basename(DIR_CUR)
-GDCC_TARGET  = "bootymenu" or PROJECT_NAME
+GDCC_TARGET  = PROJECT_NAME
 PK7_TARGET   = DIR_CUR + os.sep + PROJECT_NAME + ".pk7"
 
 EXE_7ZIP         = findBinary("7za",          [DIR_MINE + os.sep + "bin_win"])
@@ -28,7 +29,7 @@ EXE_GDCC_MAKELIB = findBinary("gdcc-makelib", [DIR_MINE + os.sep + "bin_win/gdcc
 
 ARGS_7ZIP      = ["-mx=9", "-x!*.ir"]
 
-GDCC_CFLAGS    = ["--bc-target", "ZDoom"]
+GDCC_CFLAGS    = ["--bc-target", "ZDoom", "--warn-all"]
 GDCC_LDFLAGS   = ["--bc-target", "ZDoom"]
 GDCC_MLFLAGS   = ["--bc-target", "ZDoom"]
 GDCC_ACCFLAGS  = []
@@ -135,6 +136,9 @@ def gdcc_linkObjects(builtAnything):
     command = [EXE_GDCC_LD] + GDCC_LDFLAGS + objects + ["-o", GDCC_TARGETPATH]
     print(printCommand(command))
     exitCode = subprocess.call(command)
+        
+    if exitCode != 0:
+        raise RuntimeError("gdcc-ld returned exit code " + str(exitCode))
     
     return True
 
