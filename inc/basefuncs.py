@@ -8,7 +8,7 @@ def printCommand(command):
 
     for i in command:
         if " " in i or "\t" in i:
-            newCommand.append("\"" + i.replace("\\\"", "\\\\\"").replace("\"", "\\\"") + "\"")
+            newCommand.append("\"" + i.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
         else:
             newCommand.append(i)
 
