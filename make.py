@@ -8,7 +8,6 @@ import subprocess
 from collections import defaultdict
 
 from inc.basefuncs import *
-from inc.settings  import *
 
 DIR_MINE = os.path.realpath(sys.argv[0]).rpartition(os.sep)[0]
 DIR_CUR  = os.path.realpath(".")
