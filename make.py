@@ -26,7 +26,7 @@ EXE_GDCC_CC      = findBinary("gdcc-cc",      [DIR_MINE + os.sep + "bin_win/gdcc
 EXE_GDCC_LD      = findBinary("gdcc-ld",      [DIR_MINE + os.sep + "bin_win/gdcc"])
 EXE_GDCC_MAKELIB = findBinary("gdcc-makelib", [DIR_MINE + os.sep + "bin_win/gdcc"])
 
-ARGS_7ZIP      = ["-mx=9", "-x!*.ir"]
+ARGS_7ZIP      = ["-mx=9", "-x!*.ir", "-x!*.dbs", "-x!*.backup*", "-x!*.bak"]
 
 GDCC_CFLAGS    = ["--bc-target", "ZDoom", "--warn-all"]
 GDCC_LDFLAGS   = ["--bc-target", "ZDoom"]
