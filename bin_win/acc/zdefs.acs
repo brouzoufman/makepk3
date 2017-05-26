@@ -1118,3 +1118,12 @@
 #define CPXF_CLOSEST     (1 << 10)
 #define CPXF_SETONPTR    (1 << 11)
 #define CPXF_CHECKSIGHT  (1 << 12)
+
+
+// Zandronum constants
+
+#define GAMESTATE_UNSPECIFIED       -1
+#define GAMESTATE_WAITFORPLAYERS     0
+#define GAMESTATE_COUNTDOWN          1
+#define GAMESTATE_INPROGRESS         2
+#define GAMESTATE_INRESULTSEQUENCE   3
