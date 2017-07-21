@@ -11,9 +11,9 @@ from inc.basefuncs import *
 
 DIR_MINE = os.path.realpath(sys.argv[0]).rpartition(os.sep)[0]
 DIR_CUR  = os.path.realpath(".")
-DIR_PK3  = DIR_CUR + os.sep + "pk3"
+DIR_PK3  = os.path.join(DIR_CUR, "pk3")
 
-PRECOMPILE_PATH = DIR_CUR + os.sep + "precompile.py"
+PRECOMPILE_PATH = os.path.join(DIR_CUR, "precompile.py")
 
 if os.path.isfile(PRECOMPILE_PATH):
     print("loading pre-compile module at \"" + PRECOMPILE_PATH + "\"")
@@ -25,14 +25,14 @@ if os.path.isfile(PRECOMPILE_PATH):
 # ditto for GDCC_TARGET
 PROJECT_NAME = "" or os.path.basename(DIR_CUR)
 GDCC_TARGET  = PROJECT_NAME
-PK7_TARGET   = DIR_CUR + os.sep + PROJECT_NAME + ".pk7"
+PK7_TARGET   = os.path.join(DIR_CUR, PROJECT_NAME + ".pk7")
 
-EXE_7ZIP         = findBinary("7za",          [DIR_MINE + os.sep + "bin_win"])
-EXE_ACC          = findBinary("acc",          [DIR_MINE + os.sep + "bin_win/acc"])
-EXE_GDCC_ACC     = findBinary("gdcc-acc",     [DIR_MINE + os.sep + "bin_win/gdcc"])
-EXE_GDCC_CC      = findBinary("gdcc-cc",      [DIR_MINE + os.sep + "bin_win/gdcc"])
-EXE_GDCC_LD      = findBinary("gdcc-ld",      [DIR_MINE + os.sep + "bin_win/gdcc"])
-EXE_GDCC_MAKELIB = findBinary("gdcc-makelib", [DIR_MINE + os.sep + "bin_win/gdcc"])
+EXE_7ZIP         = findBinary("7za",          [os.path.join(DIR_MINE, "bin_win")])
+EXE_ACC          = findBinary("acc",          [os.path.join(DIR_MINE, "bin_win/acc")])
+EXE_GDCC_ACC     = findBinary("gdcc-acc",     [os.path.join(DIR_MINE, "bin_win/gdcc")])
+EXE_GDCC_CC      = findBinary("gdcc-cc",      [os.path.join(DIR_MINE, "bin_win/gdcc")])
+EXE_GDCC_LD      = findBinary("gdcc-ld",      [os.path.join(DIR_MINE, "bin_win/gdcc")])
+EXE_GDCC_MAKELIB = findBinary("gdcc-makelib", [os.path.join(DIR_MINE, "bin_win/gdcc")])
 
 ARGS_7ZIP      = ["-mx=9", "-x!*.ir", "-x!*.dbs", "-x!*.backup*", "-x!*.bak"]
 
@@ -41,44 +41,27 @@ GDCC_LDFLAGS   = ["--bc-target", "ZDoom"]
 GDCC_MLFLAGS   = ["--bc-target", "ZDoom"]
 GDCC_ACCFLAGS  = []
 
-GDCC_SRCDIR = DIR_PK3 + os.sep + "gdcc"
-GACC_SRCDIR = DIR_PK3 + os.sep + "gacs"
-ACC_SRCDIR  = DIR_PK3 + os.sep + "acs"
-
-GDCC_SOURCES, GDCC_HEADERS, GDCC_OBJECTS = compilationFiles(GDCC_SRCDIR, objExt=".ir")
-GACC_SOURCES, GACC_HEADERS, GACC_OBJECTS = compilationFiles(GACC_SRCDIR, srcExts=(".c", ".acs"))
-ACC_SOURCES,  ACC_HEADERS,  ACC_OBJECTS  = compilationFiles(ACC_SRCDIR,  srcExts=(".c", ".acs"))
-
-# extra step since zdoom only checks for .o files in acs/
-GACC_OBJECTS = [i.replace(GACC_SRCDIR, ACC_SRCDIR) for i in GACC_OBJECTS]
+GDCC_SRCDIR = os.path.join(DIR_PK3, "gdcc")
+GACC_SRCDIR = os.path.join(DIR_PK3, "gacs")
+ACC_SRCDIR  = os.path.join(DIR_PK3, "acs")
 
 GDCC_LIBS       = ["libGDCC", "libc"]
-GDCC_LIBPATHS   = [GDCC_SRCDIR + os.sep + i + ".ir" for i in GDCC_LIBS]
-GDCC_TARGETDIR  = DIR_PK3 + os.sep + "acs"
-GDCC_TARGETPATH = GDCC_TARGETDIR + os.sep + GDCC_TARGET + ".o"
+GDCC_LIBPATHS   = [os.path.join(GDCC_SRCDIR, i + ".ir") for i in GDCC_LIBS]
+GDCC_TARGETPATH = os.path.join(DIR_PK3, "acs", GDCC_TARGET + ".o")
 
 
 
-def gdcc_buildObjects():
-    if not GDCC_SOURCES: return False
+def gdcc_buildObjects(src, hdr, obj):
+    mtime_makelib   = os.stat(EXE_GDCC_MAKELIB).st_mtime
+    mtime_cc        = os.stat(EXE_GDCC_CC).st_mtime
+    checkMtime      = max(mtime_makelib, mtime_cc)
 
-    if EXE_GDCC_MAKELIB is None:
-        raise EnvironmentError("gdcc-makelib was NOT FOUND")
-
-    if EXE_GDCC_CC is None:
-        raise EnvironmentError("gdcc-cc was NOT FOUND")
-
-    mtime_ml   = os.stat(EXE_GDCC_MAKELIB).st_mtime
-    mtime_cc   = os.stat(EXE_GDCC_CC).st_mtime
-    checkMtime = max(mtime_ml, mtime_cc)
-
-    libPaths     = {GDCC_LIBS[i]: GDCC_LIBPATHS[i] for i in range(len(GDCC_LIBS))}
-    recompile    = toRecompile(GDCC_SOURCES, GDCC_HEADERS, GDCC_OBJECTS)
+    libPaths     = {lib: path for lib, path in zip(GDCC_LIBS, GDCC_LIBPATHS)}
+    recompile    = toRecompile(src, hdr, obj)
     libRecompile = {}
 
-    for lib in libPaths:
-        libPath = libPaths[lib]
-
+    # update libraries if nonexistent, or GDCC updated
+    for lib, libPath in libPaths.items():
         if not os.path.isfile(libPath):
             libRecompile[lib] = libPath
             continue
@@ -90,6 +73,7 @@ def gdcc_buildObjects():
 
     if not (recompile or libRecompile):
         return False
+
 
     for lib in libRecompile:
         libPath = libRecompile[lib]
@@ -114,32 +98,30 @@ def gdcc_buildObjects():
 
 
 
-def gdcc_linkObjects(builtAnything):
-    if not GDCC_SOURCES: return False
+def gdcc_linkObjects(obj, target, builtAnything):
+    objects   = obj + GDCC_LIBPATHS
+    targetDir = os.path.dirname(target)
 
-    if EXE_GDCC_LD is None:
-        raise EnvironmentError("gdcc-ld was NOT FOUND")
+    doBuild = False
 
-    objects = GDCC_OBJECTS + GDCC_LIBPATHS
-
-    doBuild = True
-
-    if os.path.isfile(GDCC_TARGETPATH):
+    if os.path.isfile(target):
         target_mtime = os.stat(GDCC_TARGETPATH).st_mtime
 
         for o in objects:
             if os.stat(o).st_mtime >= target_mtime:
+                doBuild = True
                 break
-        else:
-            doBuild = False
+
+    else:
+        doBuild = True
 
     if not doBuild: return False
 
-    if os.path.isfile(GDCC_TARGETDIR):
-        raise EnvironmentError("pk3/acs/ exists and is a file, can't write GDCC output")
+    if os.path.isfile(targetDir):
+        raise EnvironmentError("target dir \"{}\" exists and is a file\n - can't write GDCC output".format(targetDir))
 
-    if not os.path.exists(GDCC_TARGETDIR):
-        os.mkdir(GDCC_TARGETDIR)
+    if not os.path.exists(targetDir):
+        os.mkdir(targetDir)
 
     command = [EXE_GDCC_LD] + GDCC_LDFLAGS + objects + ["-o", GDCC_TARGETPATH]
     print(printCommand(command))
@@ -152,25 +134,21 @@ def gdcc_linkObjects(builtAnything):
 
 
 
-def acc_buildObjects():
-    if not ACC_SOURCES: return False
-
-    if EXE_ACC is None:
-        raise EnvironmentError("acc was NOT FOUND")
-
-    if os.path.isfile(ACC_SRCDIR):
-        raise EnvironmentError("pk3/acs/ exists and is a file, can't output ACC output")
-
-    if not os.path.exists(ACC_SRCDIR):
-        os.mkdir(ACC_SRCDIR)
-
-    recompile = toRecompile(ACC_SOURCES, ACC_HEADERS, ACC_OBJECTS)
-
+def acc_buildObjects(src, hdr, obj):
+    recompile = toRecompile(src, hdr, obj)
     if len(recompile) == 0: return False
 
     for src in recompile:
-        obj = recompile[src]
-        command = [EXE_ACC, "-i", ACC_SRCDIR, src, obj]
+        obj    = recompile[src]
+
+        srcDir = os.path.dirname(src)
+        objDir = os.path.dirname(obj)
+
+        if not os.path.isdir(objDir):
+            print("mkdir -p {}".format(printCommand([objDir])))
+            os.makedirs(objDir, exist_ok=True)
+
+        command = [EXE_ACC, "-i", srcDir, src, obj]
         print(printCommand(command))
         exitCode = subprocess.call(command)
 
@@ -181,25 +159,21 @@ def acc_buildObjects():
 
 
 
-def gacc_buildObjects():
-    if not GACC_SOURCES: return False
-
-    if EXE_GDCC_ACC is None:
-        raise EnvironmentError("gdcc-acc was NOT FOUND")
-
-    if os.path.isfile(ACC_SRCDIR):
-        raise EnvironmentError("pk3/acs/ exists and is a file, can't write GD-ACC ouput")
-
-    if not os.path.exists(ACC_SRCDIR):
-        os.mkdir(ACC_SRCDIR)
-
-    recompile = toRecompile(GACC_SOURCES, GACC_HEADERS, GACC_OBJECTS)
-
+def gacc_buildObjects(src, hdr, obj):
+    recompile = toRecompile(src, hdr, obj)
     if len(recompile) == 0: return False
 
     for src in recompile:
-        obj = recompile[src]
-        command = [EXE_GDCC_ACC, "-i", GACC_SRCDIR, src, "-o", obj] + GDCC_ACCFLAGS
+        obj    = recompile[src]
+
+        srcDir = os.path.dirname(src)
+        objDir = os.path.dirname(obj)
+
+        if not os.path.isdir(objDir):
+            print("mkdir -p {}".format(printCommand([objDir])))
+            os.makedirs(objDir, exist_ok=True)
+
+        command = [EXE_GDCC_ACC, "-i", srcDir, src, obj]
         print(printCommand(command))
         exitCode = subprocess.call(command)
 
@@ -213,91 +187,88 @@ def gacc_buildObjects():
 def make():
     if "precompile" in globals():
         print("pre-compiling")
-        precompile.precompile(GDCC_SOURCES, GDCC_HEADERS,
-                              GACC_SOURCES, GACC_HEADERS,
-                               ACC_SOURCES,  ACC_HEADERS)
+        precompile.precompile()
     else:
         print("nothing to do for pre-compiling")
+
+    srcGDCC, hdrGDCC, objGDCC = compilationFiles(GDCC_SRCDIR,             objExt=".ir")
+    srcGACC, hdrGACC, objGACC = compilationFiles(GACC_SRCDIR, ACC_SRCDIR, srcExts=(".c", ".acs"))
+    srcACC,  hdrACC,  objACC  = compilationFiles(ACC_SRCDIR,              srcExts=(".c", ".acs"))
+
+    canDoGDCC = bool(EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD)
+    canDoGACC = bool(EXE_GDCC_ACC)
+    canDoACC  = bool(EXE_ACC)
+
+    doGDCC = bool(srcGDCC and canDoGDCC)
+    doGACC = bool(srcGACC and canDoGACC)
+    doACC  = bool(srcACC  and canDoACC)
 
     print()
 
     try:
-        allOutFiles        = defaultdict(int)
-        allOutFiles_byWhat = defaultdict(list)
+        # check for overlapping object files
+        allOutFiles = defaultdict(list)
 
-        if EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD:
-            if GDCC_SOURCES:
-                allOutFiles[GDCC_TARGETPATH] += 1
-                allOutFiles_byWhat[GDCC_TARGETPATH].append("GDCC target")
+        if doGDCC:
+            allOutFiles[GDCC_TARGETPATH].append("GDCC target")
 
-        if EXE_GDCC_ACC:
-            for n, i in enumerate(GACC_OBJECTS):
-                allOutFiles[i] += 1
-                allOutFiles_byWhat[i].append(GACC_SOURCES[n])
+        if doGACC:
+            for n, (src, obj) in enumerate(zip(srcGACC, objGACC)):
+                allOutFiles[obj].append(src)
 
-        if EXE_ACC:
-            for n, i in enumerate(ACC_OBJECTS):
-                allOutFiles[i] += 1
-                allOutFiles_byWhat[i].append(ACC_SOURCES[n])
+        if doACC:
+            for n, (src, obj) in enumerate(zip(srcACC, objACC)):
+                allOutFiles[obj].append(src)
 
         overlapFiles = []
 
-        for i in sorted(allOutFiles):
-            refcount = allOutFiles[i]
-            if refcount > 1: overlapFiles.append(i)
+        for obj in sorted(allOutFiles):
+            sources = allOutFiles[obj]
+
+            if len(sources) > 1:
+                overlapFiles.append((obj, sorted(sources)))
 
         if overlapFiles:
             errorMsg = ["following files would be written to multiple times"]
 
-            for i in overlapFiles:
-                errorMsg.append(" - {} [{}]".format(i, ", ".join(allOutFiles_byWhat[i])))
+            for obj, srcs in overlapFiles:
+                errorMsg.append(" - {} [{}]".format(i, ", ".join(srcs)))
 
             raise RuntimeError("\n".join(errorMsg))
 
 
-        if GDCC_SOURCES:
-            if EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD:
-                builtAnything  = gdcc_buildObjects()
-                linkedAnything = gdcc_linkObjects(builtAnything)
+        # compile
 
-                if not (builtAnything or linkedAnything):
-                    print("GDCC files up to date")
+        if doGDCC:
+            builtAnything  = gdcc_buildObjects(srcGDCC, hdrGDCC, objGDCC)
+            linkedAnything = gdcc_linkObjects(objGDCC, GDCC_TARGETPATH, builtAnything)
 
-            else:
-                print("any of (gdcc-cc, gdcc-makelib, gdcc-ld) missing, cannot compile for GDCC")
+            if not (builtAnything or linkedAnything):
+                print("GDCC files up to date")
 
-        else:
-            print("nothing to do for GDCC")
+        elif canDoGDCC: print("nothing to do for GDCC")
+        else: print("any of (gdcc-cc, gdcc-makelib, gdcc-ld) missing, cannot compile for GDCC")
 
         print()
 
-        if GACC_SOURCES:
-            if EXE_GDCC_ACC:
-                builtAnything = gacc_buildObjects()
+        if doGACC:
+            builtAnything = gacc_buildObjects(srcGACC, hdrGACC, objGACC)
 
-                if not builtAnything:
-                    print("GD-ACC files up to date")
+            if not builtAnything:
+                print("GD-ACC files up to date")
 
-            else:
-                print("gdcc-acc missing, cannot compile for GD-ACC")
-
-        else:
-            print("nothing to do for GD-ACC")
+        elif canDoGACC: print("nothing to do for GD-ACC")
+        else: print("gdcc-acc missing, cannot compile for GD-ACC")
 
         print()
 
-        if ACC_SOURCES:
-            if EXE_ACC:
-                builtAnything = acc_buildObjects()
+        if doACC:
+            builtAnything = acc_buildObjects(srcACC, hdrACC, objACC)
+            if not builtAnything: print("ACC files up to date")
 
-                if not builtAnything:
-                    print("ACC files up to date")
+        elif canDoACC: print("nothing to do for ACC")
+        else: print("acc missing, cannot compile for ACC")
 
-            else:
-                print("acc missing, cannot compile for ACC")
-
-        else:
-            print("nothing to do for ACC")
 
     except RuntimeError as e:
         print("\nEnded prematurely: " + str(e))
@@ -336,22 +307,23 @@ def package():
 
 
 if __name__ == "__main__":
-    if sys.version_info[0] == 2:
-        inputFunc = raw_input
-    else:
-        inputFunc = input
+    if sys.version_info[0] == 2:    inputFunc = raw_input
+    else:                           inputFunc = input
+
+    def done(exitCode=0):
+        if sys.platform.startswith("win"): inputFunc(" -- hit enter to exit -- ")
+        sys.exit(exitCode)
+
 
     if not os.path.isdir(DIR_PK3):
         print("no pk3/ directory, aborting", file=sys.stderr)
-        if sys.platform.startswith("win"): inputFunc(" -- hit enter to exit -- ")
-        sys.exit(1)
+        done(1)
 
     couldCompile = make()
 
     if couldCompile:
         print("")
         package()
-        if sys.platform.startswith("win"): inputFunc(" -- hit enter to exit -- ")
+        done()
     else:
-        if sys.platform.startswith("win"): inputFunc(" -- hit enter to exit -- ")
-        sys.exit(2)
+        done(2)
