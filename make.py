@@ -13,6 +13,14 @@ DIR_MINE = os.path.realpath(sys.argv[0]).rpartition(os.sep)[0]
 DIR_CUR  = os.path.realpath(".")
 DIR_PK3  = DIR_CUR + os.sep + "pk3"
 
+PRECOMPILE_PATH = DIR_CUR + os.sep + "precompile.py"
+
+if os.path.isfile(PRECOMPILE_PATH):
+    print("loading pre-compile module at \"" + PRECOMPILE_PATH + "\"")
+    sys.path.insert(0, DIR_CUR)
+    import precompile
+    sys.path.pop(0)
+
 # put your own project name in the quotes if you don't want to use dir name
 # ditto for GDCC_TARGET
 PROJECT_NAME = "" or os.path.basename(DIR_CUR)
@@ -51,79 +59,80 @@ GDCC_TARGETPATH = GDCC_TARGETDIR + os.sep + GDCC_TARGET + ".o"
 
 
 
-
 def gdcc_buildObjects():
     if not GDCC_SOURCES: return False
-    
+
     if EXE_GDCC_MAKELIB is None:
         raise EnvironmentError("gdcc-makelib was NOT FOUND")
-        
+
     if EXE_GDCC_CC is None:
         raise EnvironmentError("gdcc-cc was NOT FOUND")
-        
+
     mtime_ml   = os.stat(EXE_GDCC_MAKELIB).st_mtime
     mtime_cc   = os.stat(EXE_GDCC_CC).st_mtime
     checkMtime = max(mtime_ml, mtime_cc)
-    
+
     libPaths     = {GDCC_LIBS[i]: GDCC_LIBPATHS[i] for i in range(len(GDCC_LIBS))}
     recompile    = toRecompile(GDCC_SOURCES, GDCC_HEADERS, GDCC_OBJECTS)
     libRecompile = {}
-    
+
     for lib in libPaths:
         libPath = libPaths[lib]
-        
+
         if not os.path.isfile(libPath):
             libRecompile[lib] = libPath
             continue
-        
+
         mtime_lib = os.stat(libPath).st_mtime
-        
+
         if checkMtime >= mtime_lib:
             libRecompile[lib] = libPath
-            
+
     if not (recompile or libRecompile):
         return False
-   
+
     for lib in libRecompile:
         libPath = libRecompile[lib]
         command = [EXE_GDCC_MAKELIB, "-c", lib, "-o", libPath] + GDCC_MLFLAGS
         print(printCommand(command))
         exitCode = subprocess.call(command)
-        
+
         if exitCode != 0:
             raise RuntimeError("gdcc-makelib returned exit code " + str(exitCode))
-    
-    
+
+
     for src in recompile:
         obj = recompile[src]
         command = [EXE_GDCC_CC, "-c", src, "-o", obj] + GDCC_CFLAGS
         print(printCommand(command))
         exitCode = subprocess.call(command)
-        
+
         if exitCode != 0:
             raise RuntimeError("gdcc-cc returned exit code " + str(exitCode))
-    
+
     return True
-    
+
+
+
 def gdcc_linkObjects(builtAnything):
     if not GDCC_SOURCES: return False
-    
+
     if EXE_GDCC_LD is None:
         raise EnvironmentError("gdcc-ld was NOT FOUND")
-        
+
     objects = GDCC_OBJECTS + GDCC_LIBPATHS
-    
+
     doBuild = True
-    
+
     if os.path.isfile(GDCC_TARGETPATH):
         target_mtime = os.stat(GDCC_TARGETPATH).st_mtime
-        
+
         for o in objects:
             if os.stat(o).st_mtime >= target_mtime:
                 break
         else:
             doBuild = False
-    
+
     if not doBuild: return False
 
     if os.path.isfile(GDCC_TARGETDIR):
@@ -131,20 +140,21 @@ def gdcc_linkObjects(builtAnything):
 
     if not os.path.exists(GDCC_TARGETDIR):
         os.mkdir(GDCC_TARGETDIR)
-    
+
     command = [EXE_GDCC_LD] + GDCC_LDFLAGS + objects + ["-o", GDCC_TARGETPATH]
     print(printCommand(command))
     exitCode = subprocess.call(command)
-        
+
     if exitCode != 0:
         raise RuntimeError("gdcc-ld returned exit code " + str(exitCode))
-    
+
     return True
+
 
 
 def acc_buildObjects():
     if not ACC_SOURCES: return False
-    
+
     if EXE_ACC is None:
         raise EnvironmentError("acc was NOT FOUND")
 
@@ -153,26 +163,27 @@ def acc_buildObjects():
 
     if not os.path.exists(ACC_SRCDIR):
         os.mkdir(ACC_SRCDIR)
-    
+
     recompile = toRecompile(ACC_SOURCES, ACC_HEADERS, ACC_OBJECTS)
-    
+
     if len(recompile) == 0: return False
-    
+
     for src in recompile:
         obj = recompile[src]
         command = [EXE_ACC, "-i", ACC_SRCDIR, src, obj]
         print(printCommand(command))
         exitCode = subprocess.call(command)
-        
+
         if exitCode != 0:
             raise RuntimeError("acc returned exit code " + str(exitCode))
-    
+
     return True
+
 
 
 def gacc_buildObjects():
     if not GACC_SOURCES: return False
-    
+
     if EXE_GDCC_ACC is None:
         raise EnvironmentError("gdcc-acc was NOT FOUND")
 
@@ -181,62 +192,74 @@ def gacc_buildObjects():
 
     if not os.path.exists(ACC_SRCDIR):
         os.mkdir(ACC_SRCDIR)
-    
+
     recompile = toRecompile(GACC_SOURCES, GACC_HEADERS, GACC_OBJECTS)
-    
+
     if len(recompile) == 0: return False
-    
+
     for src in recompile:
         obj = recompile[src]
         command = [EXE_GDCC_ACC, "-i", GACC_SRCDIR, src, "-o", obj] + GDCC_ACCFLAGS
         print(printCommand(command))
         exitCode = subprocess.call(command)
-        
+
         if exitCode != 0:
             raise RuntimeError("gdcc-acc returned exit code " + str(exitCode))
-    
+
     return True
-    
+
+
+
 def make():
+    if "precompile" in globals():
+        print("pre-compiling")
+        precompile.precompile(GDCC_SOURCES, GDCC_HEADERS,
+                              GACC_SOURCES, GACC_HEADERS,
+                               ACC_SOURCES,  ACC_HEADERS)
+    else:
+        print("nothing to do for pre-compiling")
+
+    print()
+
     try:
         allOutFiles        = defaultdict(int)
         allOutFiles_byWhat = defaultdict(list)
-        
+
         if EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD:
             if GDCC_SOURCES:
                 allOutFiles[GDCC_TARGETPATH] += 1
                 allOutFiles_byWhat[GDCC_TARGETPATH].append("GDCC target")
-        
+
         if EXE_GDCC_ACC:
             for n, i in enumerate(GACC_OBJECTS):
                 allOutFiles[i] += 1
                 allOutFiles_byWhat[i].append(GACC_SOURCES[n])
-        
+
         if EXE_ACC:
             for n, i in enumerate(ACC_OBJECTS):
                 allOutFiles[i] += 1
                 allOutFiles_byWhat[i].append(ACC_SOURCES[n])
-        
+
         overlapFiles = []
-        
+
         for i in sorted(allOutFiles):
             refcount = allOutFiles[i]
             if refcount > 1: overlapFiles.append(i)
-        
+
         if overlapFiles:
             errorMsg = ["following files would be written to multiple times"]
-            
+
             for i in overlapFiles:
                 errorMsg.append(" - {} [{}]".format(i, ", ".join(allOutFiles_byWhat[i])))
-            
+
             raise RuntimeError("\n".join(errorMsg))
-        
-        
+
+
         if GDCC_SOURCES:
             if EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD:
                 builtAnything  = gdcc_buildObjects()
                 linkedAnything = gdcc_linkObjects(builtAnything)
-                
+
                 if not (builtAnything or linkedAnything):
                     print("GDCC files up to date")
 
@@ -245,13 +268,13 @@ def make():
 
         else:
             print("nothing to do for GDCC")
-        
-        print("")
-        
+
+        print()
+
         if GACC_SOURCES:
             if EXE_GDCC_ACC:
                 builtAnything = gacc_buildObjects()
-                
+
                 if not builtAnything:
                     print("GD-ACC files up to date")
 
@@ -260,13 +283,13 @@ def make():
 
         else:
             print("nothing to do for GD-ACC")
-        
-        print("")
-        
+
+        print()
+
         if ACC_SOURCES:
             if EXE_ACC:
                 builtAnything = acc_buildObjects()
-                
+
                 if not builtAnything:
                     print("ACC files up to date")
 
@@ -275,17 +298,19 @@ def make():
 
         else:
             print("nothing to do for ACC")
-            
+
     except RuntimeError as e:
         print("\nEnded prematurely: " + str(e))
         return False
-        
+
     except EnvironmentError as e:
         print("\nCan't continue compiling: " + str(e))
         return False
-    
+
     else:
         return True
+
+
 
 def package():
     if not EXE_7ZIP:
@@ -294,7 +319,7 @@ def package():
 
     if os.path.isfile(PK7_TARGET):
         os.remove(PK7_TARGET)
-    
+
     print("cd " + DIR_PK3)
     os.chdir(DIR_PK3)
     command = [EXE_7ZIP, "a", PK7_TARGET, ".", "-r"] + ARGS_7ZIP
@@ -309,6 +334,7 @@ def package():
     return True
 
 
+
 if __name__ == "__main__":
     if sys.version_info[0] == 2:
         inputFunc = raw_input
@@ -321,7 +347,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     couldCompile = make()
-    
+
     if couldCompile:
         print("")
         package()
