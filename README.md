@@ -1,6 +1,6 @@
 # makepk3
 
-**it actually makes pk7s but who gives a shit seriously now**
+**it build the thing**
 
 
 ## Dependencies
