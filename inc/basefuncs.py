@@ -90,24 +90,24 @@ def compilationFiles(srcDir, objDir=None, srcExts=(".c",), hdrExts=(".h",), objE
 
 
 def toRecompile(sources, headers, objects):
-    latestHeaderMod = -1
-    latestObjectMod = -1
+    newestHeader = None
+    oldestObject = None
 
     for h in headers:
         if not os.path.isfile(h): continue
         mtime = os.stat(h).st_mtime
-        latestHeaderMod = max(latestHeaderMod, mtime)
+        newestHeader = mtime if (newestHeader is None) else max(newestHeader, mtime)
 
     objectMtimes = {}
 
     for o in objects:
         if not os.path.isfile(o): continue
         mtime = os.stat(o).st_mtime
-        latestObjectMod = max(latestObjectMod, mtime)
+        oldestObject = mtime if (oldestObject is None) else min(oldestObject, mtime)
 
         objectMtimes[o] = mtime
 
-    if latestHeaderMod >= latestObjectMod:
+    if newestHeader >= oldestObject:
         return {sources[i]: objects[i] for i in range(len(sources))}
 
 
