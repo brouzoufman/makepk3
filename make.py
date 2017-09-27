@@ -25,7 +25,7 @@ if os.path.isfile(PRECOMPILE_PATH):
 # ditto for GDCC_TARGET
 PROJECT_NAME = "" or os.path.basename(DIR_CUR)
 GDCC_TARGET  = PROJECT_NAME
-PK7_TARGET   = os.path.join(DIR_CUR, PROJECT_NAME + ".pk7")
+PK7_TARGET   = os.path.join(DIR_CUR, PROJECT_NAME + ".pk3")
 
 EXE_7ZIP         = findBinary("7za",          [os.path.join(DIR_MINE, "bin_win")])
 EXE_ACC          = findBinary("acc",          [os.path.join(DIR_MINE, "bin_win/acc")])
@@ -34,7 +34,7 @@ EXE_GDCC_CC      = findBinary("gdcc-cc",      [os.path.join(DIR_MINE, "bin_win/g
 EXE_GDCC_LD      = findBinary("gdcc-ld",      [os.path.join(DIR_MINE, "bin_win/gdcc")])
 EXE_GDCC_MAKELIB = findBinary("gdcc-makelib", [os.path.join(DIR_MINE, "bin_win/gdcc")])
 
-ARGS_7ZIP      = ["-mx=9", "-x!*.ir", "-x!*.dbs", "-x!*.backup*", "-x!*.bak"]
+ARGS_7ZIP      = ["-mx=9", "-x!*.ir", "-x!*.dbs", "-x!*.backup*", "-x!*.bak", "-tzip"]
 
 GDCC_CFLAGS    = ["--bc-target", "ZDoom", "--warn-all"]
 GDCC_LDFLAGS   = ["--bc-target", "ZDoom"]
