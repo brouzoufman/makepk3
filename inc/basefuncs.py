@@ -107,7 +107,7 @@ def toRecompile(sources, headers, objects):
 
         objectMtimes[o] = mtime
 
-    if newestHeader >= oldestObject:
+    if not oldestObject or newestHeader >= oldestObject:
         return {sources[i]: objects[i] for i in range(len(sources))}
 
 
