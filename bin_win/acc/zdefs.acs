@@ -1127,3 +1127,11 @@
 #define GAMESTATE_COUNTDOWN          1
 #define GAMESTATE_INPROGRESS         2
 #define GAMESTATE_INRESULTSEQUENCE   3
+
+#define TM_SECOND   0
+#define TM_MINUTE   1
+#define TM_HOUR     2
+#define TM_DAY      3
+#define TM_MONTH    4
+#define TM_YEAR     5
+#define TM_WEEKDAY  6
