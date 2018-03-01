@@ -65,7 +65,7 @@ special
 //	 58: Sector_CopyScroller
 	 59:Polyobj_OR_MoveToSpot(3),
 	 60:Plat_PerpetualRaise(3),
- 	 61:Plat_Stop(1,2),
+	 61:Plat_Stop(1,2),
 	 62:Plat_DownWaitUpStay(3),
 	 63:Plat_DownByValue(4),
 	 64:Plat_UpWaitDownStay(3),
@@ -402,12 +402,12 @@ special
 	-123:BeginDBTransaction(0),
 	-124:EndDBTransaction(0),
 	-125:GetDBEntries(1),
-    -126:NamedRequestScriptPuke(1, 5),
-    -127:SystemTime(0),
-    -128:GetTimeProperty(2, 3),
-    -129:Strftime(2, 3),
-    -130:SetDeadSpectator(2),
-    -131:SetActivatorToPlayer(1),
+	-126:NamedRequestScriptPuke(1, 5),
+	-127:SystemTime(0),
+	-128:GetTimeProperty(2, 3),
+	-129:Strftime(2, 3),
+	-130:SetDeadSpectator(2),
+	-131:SetActivatorToPlayer(1),
 	
 	// -1xx are reserved for Zandronum
 	-200:CheckClass(1),
@@ -416,6 +416,11 @@ special
 	-203:SetTranslation(2),
 	-204:GetActorFloorTexture(1),
 	-205:GetActorFloorTerrain(1),
+	-206:StrArg(1),
+	-207:Floor(1),
+	-208:Round(1),
+	-209:Ceil(1),
+	-210:ScriptCall(2, 100),	// ACS does not know varargs so use something large as maximum.
 	
 	
 	// Eternity's
