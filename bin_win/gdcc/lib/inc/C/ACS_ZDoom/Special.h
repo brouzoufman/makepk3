@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2014 David Hill
+// Copyright(C) 2014-2017 David Hill
 //
 // See COPYLIB for license information.
 //
@@ -25,7 +25,7 @@
 ACS_SpecialDeclFull( 14, 0, int, Door_Animated, int, int, int);
 ACS_SpecialDeclFull( 15, 0, int, Autosave, void);
 
-ACS_SpecialDeclFull( 17, 0, int, Thing_Raise, int);
+ACS_SpecialDeclFull( 17, 1, int, Thing_Raise, int, int);
 ACS_SpecialDeclFull( 18, 1, int, StartConversation, int, int);
 ACS_SpecialDeclFull( 19, 0, int, Thing_Stop, int);
 
@@ -38,7 +38,7 @@ ACS_SpecialDeclFull( 39, 0, int, Teleport_ZombieChanger, int, int);
 
 ACS_SpecialDeclFull( 47, 1, int, Ceiling_MoveToValue, int, int, int, int);
 
-ACS_SpecialDeclFull( 49, 1, int, GlassBreak, int);
+ACS_SpecialDeclFull( 49, 2, int, GlassBreak, int, int);
 
 ACS_SpecialDeclFull( 51, 0, int, Sector_SetLink, int, int, int, int);
 ACS_SpecialDeclFull( 52, 0, int, Scroll_Wall, int, int, int, int, int);
@@ -66,6 +66,8 @@ ACS_SpecialDeclFull( 97, 2, int, Ceiling_LowerAndCrushDist, int, int, int, int, 
 ACS_SpecialDeclFull( 98, 1, int, Sector_SetTranslucent, int, int, int, int);
 
 ACS_SpecialDeclFull(104, 1, int, Ceiling_CrushAndRaiseSilentDist, int, int, int, int, int);
+
+ACS_SpecialDeclFull(107, 0, int, Line_SetPortalTarget);
 
 ACS_SpecialDeclFull(117, 0, int, Light_Stop, int);
 
@@ -172,6 +174,29 @@ ACS_SpecialDeclFull(252, 0, int, Ceiling_RaiseToNearest, int, int);
 ACS_SpecialDeclFull(253, 0, int, Ceiling_LowerToLowest, int, int);
 ACS_SpecialDeclFull(254, 0, int, Ceiling_LowerToFloor, int, int);
 ACS_SpecialDeclFull(255, 1, int, Ceiling_CrushRaiseAndStaySilA, int, int, int, int, int);
+ACS_SpecialDeclFull(256, 1, int, Floor_LowerToHighestEE, int, int, int);
+ACS_SpecialDeclFull(257, 1, int, Floor_RaiseToLowest, int, int, int);
+ACS_SpecialDeclFull(258, 1, int, Floor_LowerToLowestCeiling, int, int, int);
+ACS_SpecialDeclFull(259, 3, int, Floor_RaiseToCeiling, int, int, int, int, int);
+ACS_SpecialDeclFull(260, 3, int, Floor_ToCeilingInstant, int, int, int, int);
+ACS_SpecialDeclFull(261, 1, int, Floor_LowerByTexture, int, int, int);
+ACS_SpecialDeclFull(262, 1, int, Ceiling_RaiseToHighest, int, int, int);
+ACS_SpecialDeclFull(263, 2, int, Ceiling_ToHighestInstant, int, int, int);
+ACS_SpecialDeclFull(264, 2, int, Ceiling_LowerToNearest, int, int, int, int);
+ACS_SpecialDeclFull(265, 1, int, Ceiling_RaiseToLowest, int, int, int);
+ACS_SpecialDeclFull(266, 1, int, Ceiling_RaiseToHighestFloor, int, int, int);
+ACS_SpecialDeclFull(267, 3, int, Ceiling_ToFloorInstant, int, int, int, int);
+ACS_SpecialDeclFull(268, 1, int, Ceiling_RaiseByTexture, int, int, int);
+ACS_SpecialDeclFull(269, 2, int, Ceiling_LowerByTexture, int, int, int, int);
+ACS_SpecialDeclFull(270, 0, int, Stairs_BuildDownDoom, int, int, int, int, int);
+ACS_SpecialDeclFull(271, 0, int, Stairs_BuildUpDoomSync, int, int, int, int);
+ACS_SpecialDeclFull(272, 0, int, Stairs_BuildDownDoomSync, int, int, int, int);
+ACS_SpecialDeclFull(273, 0, int, Stairs_BuildUpDoomCrush, int, int, int, int, int);
+ACS_SpecialDeclFull(274, 0, int, Door_AnimatedClose, int, int);
+ACS_SpecialDeclFull(275, 0, int, Floor_Stop, int);
+ACS_SpecialDeclFull(276, 0, int, Ceiling_Stop, int);
+ACS_SpecialDeclFull(277, 0, int, Sector_SetFloorGlow, int, int, int, int, int);
+ACS_SpecialDeclFull(278, 0, int, Sector_SetCeilingGlow, int, int, int, int, int);
 
 #endif//__GDCC_Header__C__ACS_ZDoom__Special_h__
 

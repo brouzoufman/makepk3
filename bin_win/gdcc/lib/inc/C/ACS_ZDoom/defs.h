@@ -218,13 +218,24 @@
 #define APROP_Stamina          34
 #define APROP_Height           35
 #define APROP_Radius           36
-#define APROP_Reactiontime     37
+#define APROP_ReactionTime     37
 #define APROP_MeleeRange       38
 #define APROP_ViewHeight       39
 #define APROP_AttackZOffset    40
 #define APROP_StencilColor     41
 #define APROP_Friction         42
 #define APROP_DamageMultiplier 43
+#define APROP_MaxStepHeight    44
+#define APROP_MaxDropOffHeight 45
+#define APROP_DamageType       46
+#define APROP_Counter0        100
+#define APROP_Counter1        101
+#define APROP_Counter2        102
+#define APROP_Counter3        103
+#define APROP_Counter4        104
+#define APROP_Counter5        105
+#define APROP_Counter6        106
+#define APROP_Counter7        107
 
 #define STYLE_None                0
 #define STYLE_Normal              1
@@ -273,6 +284,7 @@
 #define DAMAGE_NONPLAYERS         0x00000002
 #define DAMAGE_IN_AIR             0x00000004
 #define DAMAGE_SUBCLASSES_PROTECT 0x00000008
+#define DAMAGE_NO_ARMOR           0x00000010
 
 #define MRF_OLDEFFECTS        0x00000000
 #define MRF_ADDSTAMINA        0x00000001
@@ -490,6 +502,9 @@
 #define CHAN_VOICE       0x00000002
 #define CHAN_ITEM        0x00000003
 #define CHAN_BODY        0x00000004
+#define CHAN_5           0x00000005
+#define CHAN_6           0x00000006
+#define CHAN_7           0x00000007
 #define CHAN_LISTENERZ   0x00000008
 #define CHAN_MAYBE_LOCAL 0x00000010
 #define CHAN_UI          0x00000020
@@ -645,9 +660,11 @@
 #define FOGP_OUTSIDEDENSITY 1
 #define FOGP_SKYFOG         2
 
-#define PRINTNAME_LEVELNAME -1
-#define PRINTNAME_LEVEL     -2
-#define PRINTNAME_SKILL     -3
+#define PRINTNAME_LEVELNAME  -1
+#define PRINTNAME_LEVEL      -2
+#define PRINTNAME_SKILL      -3
+#define PRINTNAME_NEXTLEVEL  -4
+#define PRINTNAME_NEXTSECRET -5
 
 #define CSF_NOFAKEFLOORS 1
 #define CSF_NOBLOCKALL   2

@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2014-2016 David Hill
+// Copyright(C) 2014-2017 David Hill
 //
 // See COPYLIB for license information.
 //
@@ -84,12 +84,14 @@ ACS_NativeDeclFull( 24, 0, int,    SetUserVariable, int, __str, int);
 ACS_NativeDeclFull( 24, 0, int,    SetUserVariableFixed, int, __str, _Accum);
 ACS_NativeDeclFull( 25, 0, int,    GetUserVariable, int, __str);
 ACS_NativeDeclFull( 25, 0, _Accum, GetUserVariableFixed, int, __str);
+ACS_NativeDeclFull( 25, 0, __str,  GetUserVariableString, int, __str);
 ACS_NativeDeclFull( 26, 0, int,    Radius_Quake2, int, int, int, int, int, __str);
 ACS_NativeDeclFull( 27, 0, int,    CheckActorClass, int, __str);
 ACS_NativeDeclFull( 28, 0, int,    SetUserArray, int, __str, int, int);
 ACS_NativeDeclFull( 28, 0, int,    SetUserArrayFixed, int, __str, int, _Accum);
 ACS_NativeDeclFull( 29, 0, int,    GetUserArray, int, __str, int);
 ACS_NativeDeclFull( 29, 0, _Accum, GetUserArrayFixed, int, __str, int);
+ACS_NativeDeclFull( 29, 0, __str,  GetUserArrayString, int, __str, int);
 ACS_NativeDeclFull( 30, 0, int,    SoundSequenceOnActor, int, __str);
 ACS_NativeDeclFull( 31, 0, int,    SoundSequenceOnSector, int, __str, int);
 ACS_NativeDeclFull( 32, 0, int,    SoundSequenceOnPolyobj, int, __str);
@@ -124,7 +126,7 @@ ACS_NativeDeclFull( 57, 0, int,    SetCVarString, __str, __str);
 ACS_NativeDeclFull( 58, 0, __str,  GetUserCVarString, int, __str);
 ACS_NativeDeclFull( 59, 0, int,    SetUserCVarString, int, __str, __str);
 ACS_NativeDeclFull( 60, 5, int,    LineAttack, int, _Accum, _Accum, int, __str, __str, _Accum, int, int);
-ACS_NativeDeclFull( 61, 4, int,    PlaySound, int, __str, int, _Accum, int, _Accum);
+ACS_NativeDeclFull( 61, 5, int,    PlaySound, int, __str, int, _Accum, int, _Accum, int);
 ACS_NativeDeclFull( 62, 1, int,    StopSound, int, int);
 ACS_NativeDeclFull( 63, 1, int,    StrCmp, __str, __str, int);
 ACS_NativeDeclFull( 64, 1, int,    StrCaseCmp, __str, __str, int);
@@ -170,6 +172,22 @@ ACS_NativeDeclFull( 99, 1, int,    CheckActorState, int, __str, int);
 ACS_NativeDeclFull(200, 2, int,    CheckClass, __str, int, int);
 ACS_NativeDeclFull(201, 0, int,    DamageActor, int, int, int, int, int, __str);
 ACS_NativeDeclFull(202, 0, int,    SetActorFlag, int, __str, int);
+ACS_NativeDeclFull(203, 0, int,    SetTranslation, int, __str);
+ACS_NativeDeclFull(204, 0, __str,  GetActorFloorTexture, int);
+ACS_NativeDeclFull(205, 0, __str,  GetActorFloorTerrain, int);
+ACS_NativeDeclFull(206, 0, int,    StrArg, __str);
+ACS_NativeDeclFull(207, 0, _Accum, Floor, _Accum);
+ACS_NativeDeclFull(208, 0, _Accum, Round, _Accum);
+ACS_NativeDeclFull(209, 0, _Accum, Ceil, _Accum);
+ACS_NativeDeclFull(210, 0, int,    ScriptCall, __str, __str, ...);
+ACS_NativeDeclFull(210, 0, _Accum, ScriptCallFixed, __str, __str, ...);
+ACS_NativeDeclFull(210, 0, __str,  ScriptCallString, __str, __str, ...);
+
+ACS_NativeDeclFull(300, 0, _Accum, GetLineX, int, _Accum, _Accum);
+ACS_NativeDeclFull(301, 0, _Accum, GetLineY, int, _Accum, _Accum);
+
+ACS_NativeDeclFull(400, 0, int,    SetSectorGlow, int, int, int, int, int, int);
+ACS_NativeDeclFull(401, 0, int,    SetFogDensity, int, int);
 
 #endif//__GDCC_Header__C__ACS_ZDoom__Native_h__
 

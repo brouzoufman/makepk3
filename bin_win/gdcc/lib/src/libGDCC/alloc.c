@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 //
-// Copyright(C) 2014-2016 David Hill
+// Copyright(C) 2014-2017 David Hill
 //
 // See COPYLIB for license information.
 //
@@ -16,10 +16,23 @@
 #include <ACS_ZDoom.h>
 #endif
 
+#if __GDCC_Target__Doominati__
+#include <Doominati.h>
+#endif
+
 
 //----------------------------------------------------------------------------|
 // Macros                                                                     |
 //
+
+//
+// __GDCC__AllocAlign
+//
+// Controls the minimum alignment requirement of allocations.
+//
+#ifndef __GDCC__AllocAlign
+#define __GDCC__AllocAlign (_Alignof(MemBlock))
+#endif
 
 //
 // __GDCC__AllocSize
@@ -86,11 +99,12 @@ struct MemBlock
 // Static Variables                                                           |
 //
 
+#if __GDCC_Family__ZDACS__
 //_Alignas(MemBlock)
 [[no_init]]
 static char AllocHeapRaw[__GDCC__AllocSize];
+#endif
 
-[[no_init]]
 static MemBlockPtr AllocBase, AllocIter;
 
 #if __GDCC_Family__ZDACS__
@@ -187,10 +201,18 @@ static void AllocDelAuto(void)
 [[call("StkCall")]]
 static void AllocInit(void)
 {
+   __size_t allocSize;
+
+   #if __GDCC_Family__ZDACS__
+   allocSize = __GDCC__AllocSize;
    AllocBase = AllocIter = (MemBlockPtr)AllocHeapRaw;
+   #elif __GDCC_Target__Doominati__
+   allocSize = (char *)DGE_FreestoreEnd() - (char *)DGE_FreestoreBegin();
+   AllocBase = AllocIter = (MemBlockPtr)DGE_FreestoreBegin();
+   #endif
 
    AllocBase->next = AllocBase->prev = AllocBase;
-   AllocBase->size = __GDCC__AllocSize - sizeof(MemBlock);
+   AllocBase->size = allocSize - sizeof(MemBlock);
    AllocBase->flag = 0;
 }
 
@@ -251,7 +273,8 @@ static _Bool AllocMerge(register MemBlockPtr block, register __size_t size)
 [[call("StkCall")]]
 static VoidPtr AllocNew(register __size_t size)
 {
-   // TODO: Round size up to alignment of MemBlock.
+   // Round size up to alignment of MemBlock.
+   size = (size + (__GDCC__AllocAlign - 1)) & ~(__GDCC__AllocAlign - 1);
 
    register MemBlockPtr iter = AllocIter;
 
@@ -406,14 +429,15 @@ void __GDCC__alloc_dump(void)
 //
 // __GDCC__Plsa
 //
-#if __GDCC_Family__ZDACS__
 [[call("StkCall")]]
 VoidPtr __GDCC__Plsa(unsigned int size)
 {
+   #if __GDCC_Family__ZDACS__
    // Check if a new hub was entered. If so, free automatic storage.
    if(AllocTime > ACS_Timer())
       AllocDelAuto();
    AllocTime = ACS_Timer();
+   #endif
 
    MemBlockPtr block = PtrToBlock(__GDCC__alloc(0, size));
 
@@ -421,18 +445,15 @@ VoidPtr __GDCC__Plsa(unsigned int size)
 
    return block->data;
 }
-#endif
 
 //
 // __GDCC__Plsf
 //
-#if __GDCC_Family__ZDACS__
 [[call("StkCall")]]
 void __GDCC__Plsf(VoidPtr ptr)
 {
    AllocDel(PtrToBlock(ptr));
 }
-#endif
 
 // EOF
 
