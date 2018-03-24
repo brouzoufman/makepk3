@@ -12,7 +12,7 @@ Linux needs these:
 
 - GDCC for GDCC and GD-ACS compilation ([https://github.com/DavidPH/GDCC](https://github.com/DavidPH/GDCC))
 - ACC  for ACS compilation ([https://github.com/rheit/acc](https://github.com/rheit/acc))
-- 7za  for packaging (check your distro's repositories for `p7zip`)
+- 7za  for packaging (check your distro's repositories for `p7zip` or `p7zip-full`)
 
 Install them normally - as long as the above are on your PATH, makepk3 will find them.
 
