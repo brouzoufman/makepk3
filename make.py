@@ -112,12 +112,12 @@ def gdcc_linkObjects(objects, target):
 
     if not doBuild: return False
 
-    if os.path.isfile(targetDir):
-        raise EnvironmentError("target dir \"{}\" exists and is a file\n - can't write GDCC output".format(targetDir))
+    if not os.path.isdir(targetDir):
+        if os.path.isfile(targetDir):
+            raise EnvironmentError("target dir \"{}\" exists and is a file".format(targetDir))
 
-    if not os.path.exists(targetDir):
         print("creating directory \"{}\"".format(targetDir))
-        os.mkdir(targetDir)
+        os.makedirs(targetDir, exist_ok=True)
 
     command = [EXE_GDCC_LD] + GDCC_LDFLAGS + objects + ["-o", target]
     print(printCommand(command))
@@ -141,6 +141,9 @@ def acc_buildObjects(src, hdr, obj, exe=EXE_ACC):
         objDir = os.path.dirname(obj)
 
         if not os.path.isdir(objDir):
+            if os.path.isfile(objDir):
+                raise EnvironmentError("target dir \"{}\" exists and is a file".format(objDir))
+
             print("creating directory \"{}\"".format(objDir))
             os.makedirs(objDir, exist_ok=True)
 
