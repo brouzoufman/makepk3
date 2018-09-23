@@ -86,7 +86,7 @@ def compilationFiles(srcDir, objDir=None, srcExts=(".c",), hdrExts=(".h",), objE
     return (sources, headers, objects)
 
 
-def toRecompile(sources, headers, objects):
+def toRecompile(sources, headers, objects, always=False):
     newestHeader = None
     oldestObject = None
 
@@ -104,7 +104,7 @@ def toRecompile(sources, headers, objects):
 
         objectMtimes[o] = mtime
 
-    if not oldestObject or (newestHeader and newestHeader >= oldestObject):
+    if always or not oldestObject or (newestHeader and newestHeader >= oldestObject):
         return {sources[i]: objects[i] for i in range(len(sources))}
 
 

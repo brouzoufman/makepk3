@@ -34,12 +34,12 @@ DIRNAME_ACC  = "acs"
 GDCC_LIBS   = ["libGDCC", "libc"]
 
 
-def gdcc_buildObjects(src, hdr, obj, libs):
+def gdcc_buildObjects(src, hdr, obj, libs, recompile=False):
     mtime_makelib   = os.stat(EXE_GDCC_MAKELIB).st_mtime
     mtime_cc        = os.stat(EXE_GDCC_CC).st_mtime
     checkMtime      = max(mtime_makelib, mtime_cc)
 
-    recompile    = toRecompile(src, hdr, obj)
+    objRecompile = toRecompile(src, hdr, obj, always=recompile)
     libRecompile = {}
 
     # update libraries if nonexistent, or GDCC updated
@@ -50,10 +50,10 @@ def gdcc_buildObjects(src, hdr, obj, libs):
 
         mtime_lib = os.stat(libPath).st_mtime
 
-        if checkMtime >= mtime_lib:
+        if recompile or checkMtime >= mtime_lib:
             libRecompile[lib] = libPath
 
-    if not (recompile or libRecompile):
+    if not (objRecompile or libRecompile):
         return False
 
 
@@ -67,8 +67,8 @@ def gdcc_buildObjects(src, hdr, obj, libs):
             raise RuntimeError("gdcc-makelib returned exit code " + str(exitCode))
 
 
-    for src in recompile:
-        obj = recompile[src]
+    for src in objRecompile:
+        obj = objRecompile[src]
         command = [EXE_GDCC_CC, "-c", src, "-o", obj] + GDCC_CFLAGS
         print(printCommand(command))
         exitCode = subprocess.call(command)
@@ -116,10 +116,12 @@ def gdcc_linkObjects(objects, target):
 
 
 
-def acc_buildObjects(src, hdr, obj, exe=EXE_ACC):
-    recompile = toRecompile(src, hdr, obj)
+def acc_buildObjects(src, hdr, obj, exe=EXE_ACC, recompile=False):
+    recompile = toRecompile(src, hdr, obj, always=recompile)
     if len(recompile) == 0: return False
 
+    lastHadOutput = False
+    
     for src in recompile:
         obj    = recompile[src]
 
@@ -134,9 +136,32 @@ def acc_buildObjects(src, hdr, obj, exe=EXE_ACC):
             os.makedirs(objDir, exist_ok=True)
 
         command = [exe, "-i", srcDir, src, obj]
+        if lastHadOutput: print()
         print(printCommand(command))
-        exitCode = subprocess.call(command)
-
+        
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        
+        output, errors = process.communicate()
+        exitCode       = process.returncode
+        
+        # hacks
+        if "Host byte order:" in output:
+            dumbshit_start = output.find("Host byte order:")
+            dumbshit_end   = output.find("endian") + len("endian")
+                
+            output = output[:dumbshit_start] + output[dumbshit_end+1:]
+        
+        if "\nOriginal ACC Version" in errors:
+            dumbshit_start = errors.find("\nOriginal ACC Version")
+            dumbshit_end   = errors.find("vd Heiden\n") + len("vd Heiden\n")
+                
+            errors = errors[:dumbshit_start] + errors[dumbshit_end+1:]
+        
+        lastHadOutput = bool(output or errors)
+        
+        if output: print(output.rstrip("\n"))
+        if errors: print(errors.rstrip("\n"))
+        
         if exitCode != 0:
             exeName = os.path.splitext(os.path.basename(exe))[0]
             raise RuntimeError(exeName + " returned exit code " + str(exitCode))
@@ -159,7 +184,7 @@ def getPrecompiler(dir="."):
 
 
 
-def buildSources(basedir, gdccName, precompile=False):
+def buildSources(basedir, gdccName, precompile=False, recompile=False):
     if precompile:
         precompiler = getPrecompiler()
         
@@ -228,7 +253,7 @@ def buildSources(basedir, gdccName, precompile=False):
             libGDCC     = [(i, os.path.join(dirGDCC, i + ".ir")) for i in GDCC_LIBS]
             linkObjects = [i[1] for i in libGDCC] + objGDCC
     
-            builtAnything  = gdcc_buildObjects(srcGDCC, hdrGDCC, objGDCC, libGDCC)
+            builtAnything  = gdcc_buildObjects(srcGDCC, hdrGDCC, objGDCC, libGDCC, recompile=recompile)
             linkedAnything = gdcc_linkObjects(linkObjects, targetGDCC)
 
             if (builtAnything or linkedAnything):   print()
@@ -239,7 +264,7 @@ def buildSources(basedir, gdccName, precompile=False):
         
         
         if doGACC:
-            builtAnything = acc_buildObjects(srcGACC, hdrGACC, objGACC, exe=EXE_GDCC_ACC)
+            builtAnything = acc_buildObjects(srcGACC, hdrGACC, objGACC, recompile=recompile, exe=EXE_GDCC_ACC)
 
             if builtAnything:   print()
             else:               print("GD-ACC files up to date")
@@ -249,7 +274,7 @@ def buildSources(basedir, gdccName, precompile=False):
       
 
         if doACC:
-            builtAnything = acc_buildObjects(srcACC, hdrACC, objACC)
+            builtAnything = acc_buildObjects(srcACC, hdrACC, objACC, recompile=recompile)
             
             if builtAnything:   print()
             else:               print("ACC files up to date")
@@ -270,7 +295,7 @@ def buildSources(basedir, gdccName, precompile=False):
         return True
 
 
-def make(pk3dir, gdccName, precompile=True):
+def make(pk3dir, gdccName, precompile=True, recompile=False):
     pk3dir = os.path.abspath(pk3dir)
     
     buildDirs = [pk3dir]
@@ -286,7 +311,7 @@ def make(pk3dir, gdccName, precompile=True):
     
     for dir in buildDirs:
         print("\n ---- building files in \"{}\" ---- \n".format(dir))
-        built = buildSources(dir, gdccName, precompile)
+        built = buildSources(dir, gdccName, precompile, recompile)
         precompile = False # only precompile once
         
         if not built: return False
@@ -354,6 +379,7 @@ if __name__ == "__main__":
     parser.add_argument("-3", "--pk3",          action="store_true",      dest="pk3",  help="build a PK3 even if building a PK7")
     parser.add_argument("-n", "--nobuild",      action="store_true",                   help="build nothing, just compile code")
     parser.add_argument("-p", "--noprecompile", action="store_false",     dest="pre",  help="don't run any precompile module")
+    parser.add_argument("-r", "--recompile",    action="store_true",                   help="recompile all ACS/GDCC code")
     
     args = parser.parse_args()
     
@@ -361,7 +387,7 @@ if __name__ == "__main__":
         print("\"{}\" is not a directory, aborting".format(args.dir), file=sys.stderr)
         done(1)
 
-    couldCompile = make(args.dir, args.obj, precompile=args.pre)
+    couldCompile = make(args.dir, args.obj, precompile=args.pre, recompile=args.recompile)
 
     if couldCompile and not args.nobuild:
         if (not args.pk7) or args.pk3: package(args.dir, args.name, pk7=False)
