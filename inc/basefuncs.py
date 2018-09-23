@@ -55,10 +55,7 @@ def findBinary(binaryName, extraPath=None):
 
 
 def compilationFiles(srcDir, objDir=None, srcExts=(".c",), hdrExts=(".h",), objExt=".o"):
-    sources = []
-    headers = []
-    objects = []
-
+    sources, headers, objects = [], [], []
 
     if ISWINDOWS:   adjustName = lambda x: x.lower()
     else:           adjustName = lambda x: x

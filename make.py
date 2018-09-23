@@ -46,22 +46,20 @@ GACC_SRCDIR = os.path.join(DIR_PK3, "gacs")
 ACC_SRCDIR  = os.path.join(DIR_PK3, "acs")
 
 GDCC_LIBS       = ["libGDCC", "libc"]
-GDCC_LIBPATHS   = [os.path.join(GDCC_SRCDIR, i + ".ir") for i in GDCC_LIBS]
 GDCC_TARGETPATH = os.path.join(DIR_PK3, "acs", GDCC_TARGET + ".o")
 
 
 
-def gdcc_buildObjects(src, hdr, obj):
+def gdcc_buildObjects(src, hdr, obj, libs):
     mtime_makelib   = os.stat(EXE_GDCC_MAKELIB).st_mtime
     mtime_cc        = os.stat(EXE_GDCC_CC).st_mtime
     checkMtime      = max(mtime_makelib, mtime_cc)
 
-    libPaths     = {lib: path for lib, path in zip(GDCC_LIBS, GDCC_LIBPATHS)}
     recompile    = toRecompile(src, hdr, obj)
     libRecompile = {}
 
     # update libraries if nonexistent, or GDCC updated
-    for lib, libPath in libPaths.items():
+    for lib, libPath in libs:
         if not os.path.isfile(libPath):
             libRecompile[lib] = libPath
             continue
@@ -98,14 +96,13 @@ def gdcc_buildObjects(src, hdr, obj):
 
 
 
-def gdcc_linkObjects(obj, target, builtAnything):
-    objects   = obj + GDCC_LIBPATHS
+def gdcc_linkObjects(objects, target):
     targetDir = os.path.dirname(target)
 
     doBuild = False
 
     if os.path.isfile(target):
-        target_mtime = os.stat(GDCC_TARGETPATH).st_mtime
+        target_mtime = os.stat(target).st_mtime
 
         for o in objects:
             if os.stat(o).st_mtime >= target_mtime:
@@ -240,8 +237,11 @@ def make():
         # compile
 
         if doGDCC:
-            builtAnything  = gdcc_buildObjects(srcGDCC, hdrGDCC, objGDCC)
-            linkedAnything = gdcc_linkObjects(objGDCC, GDCC_TARGETPATH, builtAnything)
+            libGDCC     = [(i, os.path.join(GDCC_SRCDIR, i + ".ir")) for i in GDCC_LIBS]
+            linkObjects = [i[1] for i in libGDCC] + objGDCC
+    
+            builtAnything  = gdcc_buildObjects(srcGDCC, hdrGDCC, objGDCC, libGDCC)
+            linkedAnything = gdcc_linkObjects(linkObjects, GDCC_TARGETPATH)
 
             if not (builtAnything or linkedAnything):
                 print("GDCC files up to date")
