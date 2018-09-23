@@ -21,6 +21,11 @@ optional arguments:
   -r, --recompile     recompile all ACS/GDCC code
 ```
 
+As of 2018.09.22, `makepk3` now handles filter/ directories properly, and will
+compile ACS and GDCC code within them. If you want to `#include` files from the
+non-filtered `acs/` directories, you'll have to go up the directory tree to do so.
+
+
 ## Dependencies
 
 Windows shouldn't have any, besides Python itself (2 or 3 works). The required
