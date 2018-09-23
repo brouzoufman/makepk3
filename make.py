@@ -314,15 +314,18 @@ def package(projectdir, projectname, pk7=False, builddir=None):
     print("going to \"{}\"".format(projectdir))
     os.chdir(projectdir)
     
+    print("compiling \"{}\"".format(pk3name))
     extraArgs = ARGS_7ZIP_PK7 if pk7 else ARGS_7ZIP_PK3
     command = [EXE_7ZIP, "a", pk3path, ".", "-r"] + extraArgs
     print(printCommand(command))
-    exitcode = subprocess.call(command)
+    
+    with open(os.devnull, 'w') as shutup:
+        exitcode = subprocess.call(command, stdout=shutup, stderr=shutup)
     
     os.chdir(curdir)
 
     if exitcode == 0:
-        print("\nFinal package is at " + pk3path)
+        print("\nDone, package is at " + pk3path)
     else:
         raise RuntimeError("packaging failed")
 
