@@ -11,7 +11,6 @@ from inc.basefuncs import *
 
 DIR_MINE = os.path.realpath(sys.argv[0]).rpartition(os.sep)[0]
 DIR_CUR  = os.path.realpath(".")
-DIR_PK3  = os.path.join(DIR_CUR, "pk3")
 
 PRECOMPILE_PATH = os.path.join(DIR_CUR, "precompile.py")
 
@@ -34,7 +33,9 @@ EXE_GDCC_CC      = findBinary("gdcc-cc",      [os.path.join(DIR_MINE, "bin_win/g
 EXE_GDCC_LD      = findBinary("gdcc-ld",      [os.path.join(DIR_MINE, "bin_win/gdcc")])
 EXE_GDCC_MAKELIB = findBinary("gdcc-makelib", [os.path.join(DIR_MINE, "bin_win/gdcc")])
 
-ARGS_7ZIP      = ["-mx=9", "-x!*.ir", "-x!*.dbs", "-x!*.backup*", "-x!*.bak", "-x!desktop.ini", "-tzip"]
+ARGS_7ZIP_COMMON = ["-mx=9", "-x!*.ir", "-x!*.dbs", "-x!*.backup*", "-x!*.bak", "-x!desktop.ini"]
+ARGS_7ZIP_PK3    = ARGS_7ZIP_COMMON + ["-tzip"]
+ARGS_7ZIP_PK7    = ARGS_7ZIP_COMMON + ["-t7z"]
 
 GDCC_CFLAGS    = ["--bc-target", "ZDoom", "--warn-all"]
 GDCC_LDFLAGS   = ["--bc-target", "ZDoom"]
@@ -159,7 +160,7 @@ def acc_buildObjects(src, hdr, obj, exe=EXE_ACC):
 
 
 
-def buildSources(basedir=DIR_PK3):
+def buildSources(basedir):
     if "precompile" in globals():
         print("pre-compiling")
         precompile.precompile()
@@ -264,10 +265,12 @@ def buildSources(basedir=DIR_PK3):
         return True
 
 
-def make():
-    buildDirs = [DIR_PK3]
+def make(pk3dir):
+    pk3dir = os.path.abspath(pk3dir)
     
-    filterDir = os.path.join(DIR_PK3, "filter")
+    buildDirs = [pk3dir]
+    
+    filterDir = os.path.join(pk3dir, "filter")
     
     if os.path.isdir(filterDir):
         for filter in os.listdir(filterDir):
@@ -284,24 +287,35 @@ def make():
     return True
 
 
-def package():
-    print("\n ---- packaging up \"{}\" ---- \n".format(PK7_TARGET))
+def package(projectdir, projectname, pk7=False, builddir=None):
+    builddir   = os.path.abspath(builddir or ".")
+    projectdir = os.path.abspath(projectdir)
+    curdir     = os.getcwd()
+    
+    pk3name    = projectname + "." + ("pk7" if pk7 else "pk3")
+    pk3path    = os.path.join(builddir, pk3name)
+    
+    print("\n ---- packaging up \"{}\" ---- \n".format(pk3name))
     
     if not EXE_7ZIP:
         print("\n7za not found, packaging aborted")
         return False
 
-    if os.path.isfile(PK7_TARGET):
-        os.remove(PK7_TARGET)
+    if os.path.isfile(pk3path):
+        os.remove(pk3path)
 
-    print("going to \"{}\"".format(DIR_PK3))
-    os.chdir(DIR_PK3)
-    command = [EXE_7ZIP, "a", PK7_TARGET, ".", "-r"] + ARGS_7ZIP
+    print("going to \"{}\"".format(projectdir))
+    os.chdir(projectdir)
+    
+    extraArgs = ARGS_7ZIP_PK7 if pk7 else ARGS_7ZIP_PK3
+    command = [EXE_7ZIP, "a", pk3path, ".", "-r"] + extraArgs
     print(printCommand(command))
     exitcode = subprocess.call(command)
+    
+    os.chdir(curdir)
 
     if exitcode == 0:
-        print("\nFinal package is at " + PK7_TARGET)
+        print("\nFinal package is at " + pk3path)
     else:
         raise RuntimeError("packaging failed")
 
@@ -310,6 +324,8 @@ def package():
 
 
 if __name__ == "__main__":
+    import argparse
+    
     if sys.version_info[0] == 2:    inputFunc = raw_input
     else:                           inputFunc = input
 
@@ -317,15 +333,29 @@ if __name__ == "__main__":
         if sys.platform.startswith("win"): inputFunc("\n -- hit enter to exit -- ")
         sys.exit(exitCode)
 
+    # do the or check in case some crazy fucker is running in /
+    dirname = os.path.basename(os.getcwd()) or "yourproject"
 
-    if not os.path.isdir(DIR_PK3):
-        print("no pk3/ directory, aborting", file=sys.stderr)
+    parser = argparse.ArgumentParser(prog="make.py", description="Compiles all ACS and GDCC code in your project, then stuffs it into a PK3.")
+    parser.add_argument("name",            type=str, default=dirname, nargs="?", help="name of your PK3 (default: \"{}\")".format(dirname))
+    parser.add_argument("-d", "--dir",     type=str, default="pk3",              help="location of your project (default: \"pk3\")")
+    parser.add_argument("-7", "--pk7",     action="store_true",     dest="pk7",  help="build a PK7 instead of a PK3")
+    parser.add_argument("-3", "--pk3",     action="store_true",     dest="pk3",  help="build a PK3 even if building a PK7")
+    parser.add_argument("-n", "--nobuild", action="store_true",                  help="build nothing, just compile code")
+    
+    args = parser.parse_args()
+    
+    pk3dir = args.dir
+    
+    if not os.path.isdir(pk3dir):
+        print("\"{}\" is not a directory, aborting".format(pk3dir), file=sys.stderr)
         done(1)
 
-    couldCompile = make()
+    couldCompile = make(pk3dir)
 
-    if couldCompile:
-        package()
+    if couldCompile and not args.nobuild:
+        if (not args.pk7) or args.pk3: package(pk3dir, args.name, pk7=False)
+        if args.pk7: package(pk3dir, args.name, pk7=True)
         done()
     else:
         done(2)
