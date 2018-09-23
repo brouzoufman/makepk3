@@ -139,10 +139,9 @@ def acc_buildObjects(src, hdr, obj, exe=EXE_ACC, recompile=False):
         if lastHadOutput: print()
         print(printCommand(command))
         
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        
-        output, errors = process.communicate()
-        exitCode       = process.returncode
+        with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True) as process:        
+            output, errors = process.communicate()
+            exitCode       = process.returncode
         
         # hacks
         if "Host byte order:" in output:
