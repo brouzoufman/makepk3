@@ -10,21 +10,6 @@ from collections import defaultdict
 from inc.basefuncs import *
 
 DIR_MINE = os.path.realpath(sys.argv[0]).rpartition(os.sep)[0]
-DIR_CUR  = os.path.realpath(".")
-
-PRECOMPILE_PATH = os.path.join(DIR_CUR, "precompile.py")
-
-if os.path.isfile(PRECOMPILE_PATH):
-    print("loading pre-compile module at \"" + PRECOMPILE_PATH + "\"")
-    sys.path.insert(0, DIR_CUR)
-    import precompile
-    sys.path.pop(0)
-
-# put your own project name in the quotes if you don't want to use dir name
-# ditto for GDCC_TARGET
-PROJECT_NAME = "" or os.path.basename(DIR_CUR)
-GDCC_TARGET  = PROJECT_NAME
-PK7_TARGET   = os.path.join(DIR_CUR, PROJECT_NAME + ".pk3")
 
 EXE_7ZIP         = findBinary("7za",          [os.path.join(DIR_MINE, "bin_win")])
 EXE_ACC          = findBinary("acc",          [os.path.join(DIR_MINE, "bin_win/acc")])
@@ -159,14 +144,34 @@ def acc_buildObjects(src, hdr, obj, exe=EXE_ACC):
     return True
 
 
+def getPrecompiler(dir="."):
+    dir = os.path.abspath(dir)
+    precompilePath = os.path.join(dir, "precompile.py")
+    precompile = None
+    
+    if os.path.isfile(precompilePath):
+        print("loading pre-compile module at \"" + precompilePath + "\"")
+        sys.path.insert(0, dir)
+        import precompile
+        sys.path.pop(0)
+    
+    return precompile
 
-def buildSources(basedir):
-    if "precompile" in globals():
-        print("pre-compiling")
-        precompile.precompile()
+
+
+def buildSources(basedir, gdccName, precompile=False):
+    if precompile:
+        precompiler = getPrecompiler()
+        
+        if precompiler:
+            print("pre-compiling")
+            precompiler.precompile()
+        else:
+            print("nothing to do for pre-compiling")
+    
     else:
-        print("nothing to do for pre-compiling")
-
+        print("pre-compiling disabled")
+    
     dirGDCC = os.path.join(basedir, DIRNAME_GDCC)
     dirGACC = os.path.join(basedir, DIRNAME_GACC)
     dirACC  = os.path.join(basedir, DIRNAME_ACC)
@@ -175,7 +180,7 @@ def buildSources(basedir):
     srcGACC, hdrGACC, objGACC = compilationFiles(dirGACC, dirACC, srcExts=(".c", ".acs"))
     srcACC,  hdrACC,  objACC  = compilationFiles(dirACC,          srcExts=(".c", ".acs"))
     
-    targetGDCC = os.path.join(dirACC, GDCC_TARGET + ".o")
+    targetGDCC = os.path.join(dirACC, gdccName + ".o")
 
     canDoGDCC = bool(EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD)
     canDoGACC = bool(EXE_GDCC_ACC)
@@ -265,7 +270,7 @@ def buildSources(basedir):
         return True
 
 
-def make(pk3dir):
+def make(pk3dir, gdccName, precompile=True):
     pk3dir = os.path.abspath(pk3dir)
     
     buildDirs = [pk3dir]
@@ -281,7 +286,9 @@ def make(pk3dir):
     
     for dir in buildDirs:
         print("\n ---- building files in \"{}\" ---- \n".format(dir))
-        built = buildSources(dir)
+        built = buildSources(dir, gdccName, precompile)
+        precompile = False # only precompile once
+        
         if not built: return False
     
     return True
@@ -337,25 +344,25 @@ if __name__ == "__main__":
     dirname = os.path.basename(os.getcwd()) or "yourproject"
 
     parser = argparse.ArgumentParser(prog="make.py", description="Compiles all ACS and GDCC code in your project, then stuffs it into a PK3.")
-    parser.add_argument("name",            type=str, default=dirname, nargs="?", help="name of your PK3 (default: \"{}\")".format(dirname))
-    parser.add_argument("-d", "--dir",     type=str, default="pk3",              help="location of your project (default: \"pk3\")")
-    parser.add_argument("-7", "--pk7",     action="store_true",     dest="pk7",  help="build a PK7 instead of a PK3")
-    parser.add_argument("-3", "--pk3",     action="store_true",     dest="pk3",  help="build a PK3 even if building a PK7")
-    parser.add_argument("-n", "--nobuild", action="store_true",                  help="build nothing, just compile code")
+    parser.add_argument("name",                 type=str, default=dirname, nargs="?",  help="name of your PK3 (default: \"{}\")".format(dirname))
+    parser.add_argument("-d", "--dir",          type=str, default="pk3",               help="location of your project (default: \"pk3\")")
+    parser.add_argument("-g", "--gdcc",         type=str, default="gdcc", dest="obj",  help="name of GDCC object file (default: \"gdcc\")")
+    parser.add_argument("-7", "--pk7",          action="store_true",      dest="pk7",  help="build a PK7 instead of a PK3")
+    parser.add_argument("-3", "--pk3",          action="store_true",      dest="pk3",  help="build a PK3 even if building a PK7")
+    parser.add_argument("-n", "--nobuild",      action="store_true",                   help="build nothing, just compile code")
+    parser.add_argument("-p", "--noprecompile", action="store_false",     dest="pre",  help="don't run any precompile module")
     
     args = parser.parse_args()
     
-    pk3dir = args.dir
-    
-    if not os.path.isdir(pk3dir):
-        print("\"{}\" is not a directory, aborting".format(pk3dir), file=sys.stderr)
+    if not os.path.isdir(args.dir):
+        print("\"{}\" is not a directory, aborting".format(args.dir), file=sys.stderr)
         done(1)
 
-    couldCompile = make(pk3dir)
+    couldCompile = make(args.dir, args.obj, precompile=args.pre)
 
     if couldCompile and not args.nobuild:
-        if (not args.pk7) or args.pk3: package(pk3dir, args.name, pk7=False)
-        if args.pk7: package(pk3dir, args.name, pk7=True)
+        if (not args.pk7) or args.pk3: package(args.dir, args.name, pk7=False)
+        if args.pk7: package(args.dir, args.name, pk7=True)
         done()
     else:
         done(2)
