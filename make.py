@@ -372,7 +372,7 @@ if __name__ == "__main__":
     dirname = os.path.basename(os.getcwd()) or "yourproject"
 
     parser = argparse.ArgumentParser(prog="make.py", description="Compiles all ACS and GDCC code in your project, then stuffs it into a PK3.")
-    parser.add_argument("name",                 type=str, default=dirname, nargs="?",  help="name of your PK3 (default: \"{}\")".format(dirname))
+    parser.add_argument("name",                 type=str, default=dirname, nargs="?",  help="name of your PK3 (default: directory name)")
     parser.add_argument("-d", "--dir",          type=str, default="pk3",               help="location of your project (default: \"pk3\")")
     parser.add_argument("-g", "--gdcc",         type=str, default="gdcc", dest="obj",  help="name of GDCC object file (default: \"gdcc\")")
     parser.add_argument("-7", "--pk7",          action="store_true",      dest="pk7",  help="build a PK7 instead of a PK3")

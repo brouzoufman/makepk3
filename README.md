@@ -2,6 +2,24 @@
 
 **it build the thing**
 
+```text
+usage: make.py [-h] [-d DIR] [-g OBJ] [-7] [-3] [-n] [-p] [-r] [name]
+
+Compiles all ACS and GDCC code in your project, then stuffs it into a PK3.
+
+positional arguments:
+  name                name of your PK3 (default: directory name)
+
+optional arguments:
+  -h, --help          show this help message and exit
+  -d DIR, --dir DIR   location of your project (default: "pk3")
+  -g OBJ, --gdcc OBJ  name of GDCC object file (default: "gdcc")
+  -7, --pk7           build a PK7 instead of a PK3
+  -3, --pk3           build a PK3 even if building a PK7
+  -n, --nobuild       build nothing, just compile code
+  -p, --noprecompile  don't run any precompile module
+  -r, --recompile     recompile all ACS/GDCC code
+```
 
 ## Dependencies
 
