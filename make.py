@@ -223,7 +223,7 @@ def buildSources(basedir=DIR_PK3):
             linkedAnything = gdcc_linkObjects(linkObjects, targetGDCC)
 
             if (builtAnything or linkedAnything):   print()
-            else:                                   print("ACC files up to date")
+            else:                                   print("GDCC files up to date")
 
         elif canDoGDCC: print("nothing to do for GDCC")
         else: print("any of (gdcc-cc, gdcc-makelib, gdcc-ld) missing, cannot compile for GDCC")
