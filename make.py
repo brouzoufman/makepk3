@@ -41,13 +41,11 @@ GDCC_LDFLAGS   = ["--bc-target", "ZDoom"]
 GDCC_MLFLAGS   = ["--bc-target", "ZDoom"]
 GDCC_ACCFLAGS  = []
 
-GDCC_SRCDIR = os.path.join(DIR_PK3, "gdcc")
-GACC_SRCDIR = os.path.join(DIR_PK3, "gacs")
-ACC_SRCDIR  = os.path.join(DIR_PK3, "acs")
+DIRNAME_GDCC = "gdcc"
+DIRNAME_GACC = "gacs"
+DIRNAME_ACC  = "acs"
 
-GDCC_LIBS       = ["libGDCC", "libc"]
-GDCC_TARGETPATH = os.path.join(DIR_PK3, "acs", GDCC_TARGET + ".o")
-
+GDCC_LIBS   = ["libGDCC", "libc"]
 
 
 def gdcc_buildObjects(src, hdr, obj, libs):
@@ -118,9 +116,10 @@ def gdcc_linkObjects(objects, target):
         raise EnvironmentError("target dir \"{}\" exists and is a file\n - can't write GDCC output".format(targetDir))
 
     if not os.path.exists(targetDir):
+        print("creating directory \"{}\"".format(targetDir))
         os.mkdir(targetDir)
 
-    command = [EXE_GDCC_LD] + GDCC_LDFLAGS + objects + ["-o", GDCC_TARGETPATH]
+    command = [EXE_GDCC_LD] + GDCC_LDFLAGS + objects + ["-o", target]
     print(printCommand(command))
     exitCode = subprocess.call(command)
 
@@ -131,7 +130,7 @@ def gdcc_linkObjects(objects, target):
 
 
 
-def acc_buildObjects(src, hdr, obj):
+def acc_buildObjects(src, hdr, obj, exe=EXE_ACC):
     recompile = toRecompile(src, hdr, obj)
     if len(recompile) == 0: return False
 
@@ -142,55 +141,37 @@ def acc_buildObjects(src, hdr, obj):
         objDir = os.path.dirname(obj)
 
         if not os.path.isdir(objDir):
-            print("mkdir -p {}".format(printCommand([objDir])))
+            print("creating directory \"{}\"".format(objDir))
             os.makedirs(objDir, exist_ok=True)
 
-        command = [EXE_ACC, "-i", srcDir, src, obj]
+        command = [exe, "-i", srcDir, src, obj]
         print(printCommand(command))
         exitCode = subprocess.call(command)
 
         if exitCode != 0:
-            raise RuntimeError("acc returned exit code " + str(exitCode))
+            exeName = os.path.splitext(os.path.basename(exe))[0]
+            raise RuntimeError(exeName + " returned exit code " + str(exitCode))
 
     return True
 
 
 
-def gacc_buildObjects(src, hdr, obj):
-    recompile = toRecompile(src, hdr, obj)
-    if len(recompile) == 0: return False
-
-    for src in recompile:
-        obj    = recompile[src]
-
-        srcDir = os.path.dirname(src)
-        objDir = os.path.dirname(obj)
-
-        if not os.path.isdir(objDir):
-            print("mkdir -p {}".format(printCommand([objDir])))
-            os.makedirs(objDir, exist_ok=True)
-
-        command = [EXE_GDCC_ACC, "-i", srcDir, src, obj]
-        print(printCommand(command))
-        exitCode = subprocess.call(command)
-
-        if exitCode != 0:
-            raise RuntimeError("gdcc-acc returned exit code " + str(exitCode))
-
-    return True
-
-
-
-def make():
+def buildSources(basedir=DIR_PK3):
     if "precompile" in globals():
         print("pre-compiling")
         precompile.precompile()
     else:
         print("nothing to do for pre-compiling")
 
-    srcGDCC, hdrGDCC, objGDCC = compilationFiles(GDCC_SRCDIR,             objExt=".ir")
-    srcGACC, hdrGACC, objGACC = compilationFiles(GACC_SRCDIR, ACC_SRCDIR, srcExts=(".c", ".acs"))
-    srcACC,  hdrACC,  objACC  = compilationFiles(ACC_SRCDIR,              srcExts=(".c", ".acs"))
+    dirGDCC = os.path.join(basedir, DIRNAME_GDCC)
+    dirGACC = os.path.join(basedir, DIRNAME_GACC)
+    dirACC  = os.path.join(basedir, DIRNAME_ACC)
+    
+    srcGDCC, hdrGDCC, objGDCC = compilationFiles(dirGDCC,         objExt=".ir")
+    srcGACC, hdrGACC, objGACC = compilationFiles(dirGACC, dirACC, srcExts=(".c", ".acs"))
+    srcACC,  hdrACC,  objACC  = compilationFiles(dirACC,          srcExts=(".c", ".acs"))
+    
+    targetGDCC = os.path.join(dirACC, GDCC_TARGET + ".o")
 
     canDoGDCC = bool(EXE_GDCC_CC and EXE_GDCC_MAKELIB and EXE_GDCC_LD)
     canDoGACC = bool(EXE_GDCC_ACC)
@@ -200,14 +181,12 @@ def make():
     doGACC = bool(srcGACC and canDoGACC)
     doACC  = bool(srcACC  and canDoACC)
 
-    print()
-
     try:
         # check for overlapping object files
         allOutFiles = defaultdict(list)
 
         if doGDCC:
-            allOutFiles[GDCC_TARGETPATH].append("GDCC target")
+            allOutFiles[targetGDCC].append("GDCC target")
 
         if doGACC:
             for n, (src, obj) in enumerate(zip(srcGACC, objGACC)):
@@ -237,34 +216,34 @@ def make():
         # compile
 
         if doGDCC:
-            libGDCC     = [(i, os.path.join(GDCC_SRCDIR, i + ".ir")) for i in GDCC_LIBS]
+            libGDCC     = [(i, os.path.join(dirGDCC, i + ".ir")) for i in GDCC_LIBS]
             linkObjects = [i[1] for i in libGDCC] + objGDCC
     
             builtAnything  = gdcc_buildObjects(srcGDCC, hdrGDCC, objGDCC, libGDCC)
-            linkedAnything = gdcc_linkObjects(linkObjects, GDCC_TARGETPATH)
+            linkedAnything = gdcc_linkObjects(linkObjects, targetGDCC)
 
-            if not (builtAnything or linkedAnything):
-                print("GDCC files up to date")
+            if (builtAnything or linkedAnything):   print()
+            else:                                   print("ACC files up to date")
 
         elif canDoGDCC: print("nothing to do for GDCC")
         else: print("any of (gdcc-cc, gdcc-makelib, gdcc-ld) missing, cannot compile for GDCC")
-
-        print()
-
+        
+        
         if doGACC:
-            builtAnything = gacc_buildObjects(srcGACC, hdrGACC, objGACC)
+            builtAnything = acc_buildObjects(srcGACC, hdrGACC, objGACC, exe=EXE_GDCC_ACC)
 
-            if not builtAnything:
-                print("GD-ACC files up to date")
+            if builtAnything:   print()
+            else:               print("GD-ACC files up to date")
 
         elif canDoGACC: print("nothing to do for GD-ACC")
         else: print("gdcc-acc missing, cannot compile for GD-ACC")
-
-        print()
+      
 
         if doACC:
             builtAnything = acc_buildObjects(srcACC, hdrACC, objACC)
-            if not builtAnything: print("ACC files up to date")
+            
+            if builtAnything:   print()
+            else:               print("ACC files up to date")
 
         elif canDoACC: print("nothing to do for ACC")
         else: print("acc missing, cannot compile for ACC")
@@ -282,8 +261,29 @@ def make():
         return True
 
 
+def make():
+    buildDirs = [DIR_PK3]
+    
+    filterDir = os.path.join(DIR_PK3, "filter")
+    
+    if os.path.isdir(filterDir):
+        for filter in os.listdir(filterDir):
+            path = os.path.join(filterDir, filter)
+            if os.path.isdir(path):
+                buildDirs.append(path)
+    
+    
+    for dir in buildDirs:
+        print("\n ---- building files in \"{}\" ---- \n".format(dir))
+        built = buildSources(dir)
+        if not built: return False
+    
+    return True
+
 
 def package():
+    print("\n ---- packaging up \"{}\" ---- \n".format(PK7_TARGET))
+    
     if not EXE_7ZIP:
         print("\n7za not found, packaging aborted")
         return False
@@ -291,7 +291,7 @@ def package():
     if os.path.isfile(PK7_TARGET):
         os.remove(PK7_TARGET)
 
-    print("cd " + DIR_PK3)
+    print("going to \"{}\"".format(DIR_PK3))
     os.chdir(DIR_PK3)
     command = [EXE_7ZIP, "a", PK7_TARGET, ".", "-r"] + ARGS_7ZIP
     print(printCommand(command))
@@ -311,7 +311,7 @@ if __name__ == "__main__":
     else:                           inputFunc = input
 
     def done(exitCode=0):
-        if sys.platform.startswith("win"): inputFunc(" -- hit enter to exit -- ")
+        if sys.platform.startswith("win"): inputFunc("\n -- hit enter to exit -- ")
         sys.exit(exitCode)
 
 
@@ -322,7 +322,6 @@ if __name__ == "__main__":
     couldCompile = make()
 
     if couldCompile:
-        print("")
         package()
         done()
     else:
