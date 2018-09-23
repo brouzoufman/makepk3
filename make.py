@@ -226,7 +226,7 @@ def buildSources(basedir=DIR_PK3):
             else:                                   print("GDCC files up to date")
 
         elif canDoGDCC: print("nothing to do for GDCC")
-        else: print("any of (gdcc-cc, gdcc-makelib, gdcc-ld) missing, cannot compile for GDCC")
+        else: print("any of (gdcc-cc, gdcc-makelib, gdcc-ld) missing, cannot compile for GDCC", file=sys.stderr)
         
         
         if doGACC:
@@ -236,7 +236,7 @@ def buildSources(basedir=DIR_PK3):
             else:               print("GD-ACC files up to date")
 
         elif canDoGACC: print("nothing to do for GD-ACC")
-        else: print("gdcc-acc missing, cannot compile for GD-ACC")
+        else: print("gdcc-acc missing, cannot compile for GD-ACC", file=sys.stderr)
       
 
         if doACC:
@@ -246,15 +246,15 @@ def buildSources(basedir=DIR_PK3):
             else:               print("ACC files up to date")
 
         elif canDoACC: print("nothing to do for ACC")
-        else: print("acc missing, cannot compile for ACC")
+        else: print("acc missing, cannot compile for ACC", file=sys.stderr)
 
 
     except RuntimeError as e:
-        print("\nEnded prematurely: " + str(e))
+        print("\nEnded prematurely: " + str(e), file=sys.stderr)
         return False
 
     except EnvironmentError as e:
-        print("\nCan't continue compiling: " + str(e))
+        print("\nCan't continue compiling: " + str(e), file=sys.stderr)
         return False
 
     else:
