@@ -48,7 +48,7 @@ While in the directory containing `pk3/`, run `make.py`.
 
 That's it.
 
-Assuming no errors pop up, you should have a PK7 pop up in the directory you ran
+Assuming no errors pop up, you should have a PK3 pop up in the directory you ran
 it in, containing everything in the `pk3/` directory, with the ACS and GDCC
 compiled up, ready to go.
 
@@ -66,11 +66,8 @@ looks for them in.
 If you're running make.py through Windows Explorer or something (basically, not
 through the command line), make a shortcut and change the working directory to
 the one with `pk3/`. Or make a small batch script that runs the command while
-in the right directory. Something along those lines.
-
-If you want to change the name of the generated PK3 or GDCC target file, either
-change the name of the directory your project is in, or hardcode it into the
-`PROJECT_NAME`/`GDCC_TARGET`/`PK7_TARGET` variable (`make.py`, line 18/19/20).
+in the right directory. Something along those lines. If you want to use any command
+line options with the shortcut, put them in the Target box in the shortcut properties.
 
 You do not need to copy this into the same directory that houses `pk3/`. Really,
 you should leave makepk3's stuff in a directory of its own.
