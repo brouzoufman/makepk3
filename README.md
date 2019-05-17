@@ -38,6 +38,11 @@ Linux needs these:
 - 7za  for packaging (check your distro's repositories for `p7zip` or `p7zip-full`)
 
 Install them normally - as long as the above are on your PATH, makepk3 will find them.
+Alternatively, you can put them in the following places:
+
+- GDCC: `bin_usr/gdcc/`
+- ACC:  `bin_usr/acc/`
+- 7za:  `bin_usr/`
 
 If GDCC is missing, `make.py` will not attempt to build anything in `pk3/gacs` or `pk3/gdcc`.
 

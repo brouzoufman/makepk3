@@ -1,3 +1,4 @@
 *.pyc
 dist/*
 build/*
+bin_usr/*

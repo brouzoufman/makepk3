@@ -11,12 +11,12 @@ from inc.basefuncs import *
 
 DIR_MINE = os.path.realpath(sys.argv[0]).rpartition(os.sep)[0]
 
-EXE_7ZIP         = findBinary("7za",          [os.path.join(DIR_MINE, "bin_win")])
-EXE_ACC          = findBinary("acc",          [os.path.join(DIR_MINE, "bin_win/acc")])
-EXE_GDCC_ACC     = findBinary("gdcc-acc",     [os.path.join(DIR_MINE, "bin_win/gdcc")])
-EXE_GDCC_CC      = findBinary("gdcc-cc",      [os.path.join(DIR_MINE, "bin_win/gdcc")])
-EXE_GDCC_LD      = findBinary("gdcc-ld",      [os.path.join(DIR_MINE, "bin_win/gdcc")])
-EXE_GDCC_MAKELIB = findBinary("gdcc-makelib", [os.path.join(DIR_MINE, "bin_win/gdcc")])
+EXE_7ZIP         = findBinary("7za",          [os.path.join(DIR_MINE, "bin_usr"),      os.path.join(DIR_MINE, "bin_win")])
+EXE_ACC          = findBinary("acc",          [os.path.join(DIR_MINE, "bin_usr/acc"),  os.path.join(DIR_MINE, "bin_win/acc")])
+EXE_GDCC_ACC     = findBinary("gdcc-acc",     [os.path.join(DIR_MINE, "bin_usr/gdcc"), os.path.join(DIR_MINE, "bin_win/gdcc")])
+EXE_GDCC_CC      = findBinary("gdcc-cc",      [os.path.join(DIR_MINE, "bin_usr/gdcc"), os.path.join(DIR_MINE, "bin_win/gdcc")])
+EXE_GDCC_LD      = findBinary("gdcc-ld",      [os.path.join(DIR_MINE, "bin_usr/gdcc"), os.path.join(DIR_MINE, "bin_win/gdcc")])
+EXE_GDCC_MAKELIB = findBinary("gdcc-makelib", [os.path.join(DIR_MINE, "bin_usr/gdcc"), os.path.join(DIR_MINE, "bin_win/gdcc")])
 
 ARGS_7ZIP_COMMON = ["-mx=9", "-x!*.ir", "-x!*.dbs", "-x!*.backup*", "-x!*.bak", "-x!desktop.ini"]
 ARGS_7ZIP_PK3    = ARGS_7ZIP_COMMON + ["-tzip"]
@@ -383,7 +383,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if not os.path.isdir(args.dir):
-        print("\"{}\" is not a directory, aborting".format(args.dir), file=sys.stderr)
+        if os.path.exists(args.dir):
+            print("project path \"{}\" is not a folder, aborting".format(args.dir), file=sys.stderr)
+        else:
+            print("project path \"{}\" doesn't exist, aborting".format(args.dir), file=sys.stderr)
+        
         done(1)
 
     couldCompile = make(args.dir, args.obj, precompile=args.pre, recompile=args.recompile)
